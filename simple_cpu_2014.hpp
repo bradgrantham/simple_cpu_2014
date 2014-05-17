@@ -7,7 +7,7 @@ static uint32_t maskbits(int count)
     return (1 << count) - 1;
 }
 
-uint32_t format16(uint32_t op, uint32_t dst, uint32_t src, uint32_t size, uint32_t data16)
+static inline uint32_t format16(uint32_t op, uint32_t dst, uint32_t src, uint32_t size, uint32_t data16)
 {
     return
         (op << 27) | 
@@ -25,7 +25,7 @@ uint32_t format16_(uint32_t dst, uint32_t src, uint32_t size, uint32_t data16)
 }
 
 
-uint32_t format18(uint32_t op, uint32_t dst, uint32_t src, uint32_t size, uint32_t data18)
+static inline uint32_t format18(uint32_t op, uint32_t dst, uint32_t src, uint32_t size, uint32_t data18)
 {
     return
         (op << 27) | 
@@ -43,7 +43,7 @@ uint32_t format18_(uint32_t dst, uint32_t src, uint32_t size, uint32_t data18)
 }
 
 
-uint32_t format24(uint32_t op, uint32_t dst, uint32_t data24)
+static inline uint32_t format24(uint32_t op, uint32_t dst, uint32_t data24)
 {
     return
         (op << 27) | 
@@ -58,7 +58,7 @@ uint32_t format24_(uint32_t dst, uint32_t data24)
     return format24(OP, dst, data24);
 }
 
-uint32_t format27(uint32_t op, uint32_t data27)
+static inline uint32_t format27(uint32_t op, uint32_t data27)
 {
     return
         (op << 27) | 
