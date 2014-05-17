@@ -2,7 +2,6 @@
 
 namespace simple_cpu_2014 {
 
-// XXX won't work for count=32
 static uint32_t maskbits(int count)
 {
     return (1 << count) - 1;
