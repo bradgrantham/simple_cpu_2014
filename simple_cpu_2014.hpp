@@ -106,6 +106,10 @@ namespace opcode {
     const uint RSR = 0x19;
     const uint JMP = 0x1a;
 
+    const uint SYS = 0x1b;
+    const uint UNUSED_1c = 0x1c;
+    const uint UNUSED_1d = 0x1d;
+    const uint UNUSED_1e = 0x1e;
     const uint HALT = 0x1f;
 };
 
@@ -155,10 +159,11 @@ auto const XCHG = format18_<opcode::XCHG>;
 auto const JNE = format27_<opcode::JNE>;
 auto const JL = format27_<opcode::JL>;
 auto const JSR = format27_<opcode::JSR>;
-auto const JMP = format27_<opcode::JSR>;
-auto const JR = format24_<opcode::JSR>;
-auto const RSR = format24_<opcode::JSR>;
+auto const JMP = format27_<opcode::JMP>;
+auto const JR = format24_<opcode::JR>;
+auto const RSR = format24_<opcode::RSR>;
 
+auto const SYS = format27_<opcode::SYS>; // only LS 6 bits are used
 auto const HALT = format27_<opcode::HALT>;
 
 };
