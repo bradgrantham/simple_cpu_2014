@@ -401,11 +401,13 @@ int main(int argc, char **argv)
 
         memory_changed change = opcodes[instr.opcode].func(s, instr);
 
-        printf("R0:%08X R1:%08X R2:%08X R3:%08X\nR4:%08X R5:%08X SP:%08X PC:%08X\n", 
-            s.registers[0], s.registers[1], s.registers[2], s.registers[3],
+        printf("R0:%08X R1:%08X R2:%08X R3:%08X\n",
+            s.registers[0], s.registers[1], s.registers[2], s.registers[3]);
+        printf("R4:%08X R5:%08X SP:%08X PC:%08X\n", 
             s.registers[4], s.registers[5], s.registers[6], s.registers[7]);
+
         if(change.first) {
-            printf("changed %08x : %08X\n", change.second, s.fetch32(change.second));
+            printf("memory changed %08x : %08X\n", change.second, s.fetch32(change.second));
         }
     };
 }
