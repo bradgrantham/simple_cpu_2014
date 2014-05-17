@@ -94,51 +94,7 @@ struct opcode_info {
     instructionfunc func;
 };
 
-int datasize[] =
-{
-    [opcode::MOVIU] = 24,
-    [opcode::ADDI] = 24,
-    [opcode::SHIFT] = 24,
-    [opcode::CMPIU] = 24,
-    [opcode::ADDIU] = 24,
-
-    [opcode::STORE] = 18,
-    [opcode::LOAD] = 18,
-    [opcode::MOV] = 18,
-    [opcode::PUSH] = 24,
-    [opcode::POP] = 24,
-
-    [opcode::AND] = 18,
-    [opcode::OR] = 18,
-    [opcode::XOR] = 18,
-    [opcode::NOT] = 18,
-    [opcode::ADD] = 18,
-    [opcode::ADC] = 18,
-    [opcode::SUB] = 18,
-    [opcode::MULT] = 18,
-    [opcode::DIV] = 18,
-    [opcode::CMP] = 18,
-    [opcode::XCHG] = 18,
-
-    [opcode::JNE] = 27,
-    [opcode::JL] = 27,
-    [opcode::JSR] = 27,
-    [opcode::JMP] = 27,
-    [opcode::JR] = 24,
-    [opcode::RSR] = 24,
-
-    [opcode::SYS] = 6, // special case
-    [opcode::HALT] = 27,
-};
-
-instruction::instruction(uint32_t value)
-{
-    opcode = (value >> 27);
-    dst = (value >> 24) & 0x7;
-    src = (value >> 21) & 0x7;
-    size = (value >> 18) & 0x7;
-    data = value & maskbits(datasize[opcode]);
-}
+extern opcode_info opcodes[];
 
 memory_changed moviu(state& s, const instruction& instr)
 {
@@ -149,7 +105,7 @@ memory_changed moviu(state& s, const instruction& instr)
 
 memory_changed addi(state& s, const instruction& instr)
 {
-    s.registers[instr.dst] += sign_extend(instr.data, datasize[instr.opcode]);
+    s.registers[instr.dst] += sign_extend(instr.data, opcodes[instr.opcode].datasize);
     s.registers[reg::PC] += 4;
     return memory_changed(false, 0);
 }
@@ -373,80 +329,51 @@ memory_changed halt(state& s, const instruction& instr)
     return memory_changed(false, 0);
 }
 
-const char* opcode_names[] =
+opcode_info opcodes[] =
 {
-    [opcode::MOVIU] = "moviu",
-    [opcode::ADDI] = "addi",
-    [opcode::SHIFT] = "shift",
-    [opcode::CMPIU] = "cmpiu",
-    [opcode::ADDIU] = "addiu",
+    [opcode::MOVIU] = {24, "moviu", moviu},
+    [opcode::ADDI] = {24, "addi", addi},
+    [opcode::SHIFT] = {24, "shift", shift},
+    [opcode::CMPIU] = {24, "cmpiu", cmpiu},
+    [opcode::ADDIU] = {24, "addiu", addiu},
 
-    [opcode::STORE] = "store",
-    [opcode::LOAD] = "load",
-    [opcode::MOV] = "mov",
-    [opcode::PUSH] = "push",
-    [opcode::POP] = "pop",
+    [opcode::STORE] = {18, "store", store},
+    [opcode::LOAD] = {18, "load", load},
+    [opcode::MOV] = {18, "mov", mov},
+    [opcode::PUSH] = {24, "push", push},
+    [opcode::POP] = {24, "pop", pop},
 
-    [opcode::AND] = "and",
-    [opcode::OR] = "or",
-    [opcode::XOR] = "xor",
-    [opcode::NOT] = "not",
-    [opcode::ADD] = "add",
-    [opcode::ADC] = "adc",
-    [opcode::SUB] = "sub",
-    [opcode::MULT] = "mult",
-    [opcode::DIV] = "div",
-    [opcode::CMP] = "cmp",
-    [opcode::XCHG] = "xchg",
+    [opcode::AND] = {18, "and", op_and},
+    [opcode::OR] = {18, "or", op_or},
+    [opcode::XOR] = {18, "xor", op_xor},
+    [opcode::NOT] = {18, "not", op_not},
+    [opcode::ADD] = {18, "add", add},
+    [opcode::ADC] = {18, "adc", adc},
+    [opcode::SUB] = {18, "sub", sub},
+    [opcode::MULT] = {18, "mult", mult},
+    [opcode::DIV] = {18, "div", div},
+    [opcode::CMP] = {18, "cmp", cmp},
+    [opcode::XCHG] = {18, "xchg", xchg},
 
-    [opcode::JNE] = "jne",
-    [opcode::JL] = "jl",
-    [opcode::JSR] = "jsr",
-    [opcode::JMP] = "jmp",
-    [opcode::JR] = "jr",
-    [opcode::RSR] = "rsr",
+    [opcode::JNE] = {27, "jne", jne},
+    [opcode::JL] = {27, "jl", jl},
+    [opcode::JSR] = {27, "jsr", jsr},
+    [opcode::JMP] = {27, "jmp", jmp},
+    [opcode::JR] = {24, "jr", jr},
+    [opcode::RSR] = {24, "rsr", rsr},
 
-    [opcode::SYS] = "sys", // special case
-    [opcode::HALT] = "halt",
+    [opcode::SYS] = {6, "sys", sys}, // 6 bits is special case
+    [opcode::HALT] = {27, "halt", halt},
 };
 
-instructionfunc funcs[] =
+instruction::instruction(uint32_t value)
 {
-    [opcode::MOVIU] = moviu,
-    [opcode::ADDI] = addi,
-    [opcode::SHIFT] = shift,
-    [opcode::CMPIU] = cmpiu,
-    [opcode::ADDIU] = addiu,
-
-    [opcode::STORE] = store,
-    [opcode::LOAD] = load,
-    [opcode::MOV] = mov,
-    [opcode::PUSH] = push,
-    [opcode::POP] = pop,
-
-    [opcode::AND] = op_and,
-    [opcode::OR] = op_or,
-    [opcode::XOR] = op_xor,
-    [opcode::NOT] = op_not,
-    [opcode::ADD] = add,
-    [opcode::ADC] = adc,
-    [opcode::SUB] = sub,
-    [opcode::MULT] = mult,
-    [opcode::DIV] = div,
-    [opcode::CMP] = cmp,
-    [opcode::XCHG] = xchg,
-
-    [opcode::JNE] = jne,
-    [opcode::JL] = jl,
-    [opcode::JSR] = jsr,
-    [opcode::JMP] = jmp,
-    [opcode::JR] = jr,
-    [opcode::RSR] = rsr,
-
-    [opcode::SYS] = sys, // special case
-    [opcode::HALT] = halt,
-};
-
+    opcode = (value >> 27);
+    dst = (value >> 24) & 0x7;
+    src = (value >> 21) & 0x7;
+    size = (value >> 18) & 0x7;
+    data = value & maskbits(opcodes[opcode].datasize);
+}
 
 
 state s;
@@ -463,16 +390,16 @@ int main(int argc, char **argv)
     while(!s.halted) {
         instruction instr(s.fetch32(s.registers[reg::PC]));
 
-        printf("decoded %s", opcode_names[instr.opcode]);
-        if(datasize[instr.opcode] == 18) {
+        printf("decoded %s", opcodes[instr.opcode].name);
+        if(opcodes[instr.opcode].datasize == 18) {
             printf(", dst = %d, src = %d, size = %d, data = 0x%X\n", instr.dst, instr.src, instr.size, instr.data);
-        } else if(datasize[instr.opcode] == 24) {
+        } else if(opcodes[instr.opcode].datasize == 24) {
             printf(", dst = %d, src = %d, data = 0x%X\n", instr.dst, instr.src, instr.data);
-        } else /* if(datasize[instr.opcode] == 27) or 6 */ {
+        } else /* if(opcodes[instr.opcode].datasize == 27) or 6 */ {
             printf(", dst = %d, data = 0x%X\n", instr.dst, instr.data);
         }
 
-        memory_changed change = funcs[instr.opcode](s, instr);
+        memory_changed change = opcodes[instr.opcode].func(s, instr);
 
         printf("R0:%08X R1:%08X R2:%08X R3:%08X\nR4:%08X R5:%08X SP:%08X PC:%08X\n", 
             s.registers[0], s.registers[1], s.registers[2], s.registers[3],
