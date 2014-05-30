@@ -1,0 +1,106 @@
+line = { whitespace } [label] { whitespace } [ instruction | directive ] { whitespace } [comment]
+
+COMMENT_DELIM = '/'
+comment = COMMENT_DELIM COMMENT_DELIM { any_character }
+
+any_character = ? all characters ?
+whitespace = ? whitespace characters ?
+whitespaceplus = whitespace { whitespace } 
+LABEL_DELIM = ':'
+UNDERSCORE = '_'
+ALPHAUNDER = alpha | UNDERSCORE
+ALPHANUMERICUNDER = alphanumeric | UNDERSCORE
+COMMA = ','
+comma_delim = whitespaceplus ',' whitespaceplus 
+
+number = { DIGIT } | ( ( '0x' | '0X' ) { DIGIT }
+identifier = ALPHAUNDER { ALPHANUMERICUNDER }
+QUOTE = '"'
+NOTQUOTE = { any_character - '"' } 
+stringliteral = QUOTE NOTQUOTE QUOTE
+
+label = identifier LABEL_DELIM
+(* remember label to be set *)
+
+byte = 'byte'
+word = 'word'
+short = 'short'
+string = 'string'
+
+halt = 'halt'
+swapcc = 'swapcc'
+rsr = 'rsr'
+push = 'push'
+pop = 'pop'
+jl = 'jl'
+jmp = 'jmp'
+jne = 'jne'
+sys = 'sys'
+and = 'and'
+or = 'or'
+xor = 'xor'
+not = 'not'
+add = 'add'
+adc = 'adc'
+sub = 'sub'
+mult = 'mult'
+div = 'div'
+cmp = 'cmp'
+xchg = 'xchg'
+mov = 'mov'
+moviu = 'moviu'
+addiu = 'addiu'
+addi = 'addi'
+cmpiu = 'cmpiu'
+shift = 'shift'
+jr = 'jr'
+jsr = 'jsr'
+shift = 'shift'
+load = 'load'
+store = 'store'
+
+size_modifier = ( byte | word | short )
+
+orgdirective = dot 'org' whitespaceplus number
+(* set any labels ; set address to number *)
+
+definedirective = dot 'define' whitespaceplus identifier whitespaceplus number
+(* store an identifier with value number *)
+
+memdirective = dot size_modifier whitespaceplus number { comma_delim number }
+(* maybe pad address to size; set any labels; store numbers, checking sizes, incrementing by address size *)
+
+stringdirective = dot 'string' whitespaceplus stringliteral
+(* set any labels ; store string, incrementing address by size of string *)
+
+directive = ( orgdirective | definedirective | memdirective | stringdirective )
+
+shift_type = ( rl | al | rr | ar )
+
+r0 = ( 'r' | 'R' ) '0'
+r1 = ( 'r' | 'R' ) '1'
+r2 = ( 'r' | 'R' ) '2'
+r3 = ( 'r' | 'R' ) '3'
+r4 = ( 'r' | 'R' ) '4'
+r5 = ( ( 'r' | 'R' ) '5' | 'fp' | 'FP' )
+r6 = ( ( 'r' | 'R' ) '6' | 'sp' | 'SP' )
+r7 = ( ( 'r' | 'R' ) '7' | 'pc' | 'PC' )
+
+register = ( r0 | r1 | r2 | r3 | r4 | r5 | r6 | r7 )
+
+instruction_direct = ( halt )
+
+instruction_rx = ( swapcc | rsr | push | pop ) whitespaceplus register
+
+instruction_imm = ( jl | jmp | jne | sys ) whitespaceplus ( number | identifier )
+
+instruction_rxry = ( and | or | xor | not | add | adc | sub | mult | div | cmp | xchg | mov ) whitespaceplus register comma_delim register
+
+instruction_rximm = ( moviu | addiu | addi | cmpiu | jr | jsr ) whitespaceplus register comma_delim (number | identifier)
+
+instruction_rximm_size = ( shift ) dot shift_type whitespaceplus register comma_delim ( number | identifier )
+
+instruction_rxryimm = ( load | store ) dot size_modifier whitespaceplus register comma_delim register COMMAspace ( number | identifier )
+
+(* pad address to 4; set any labels ; store instruction to set later *)
+(* go through instructions, evaluate data parameters, check size of data, store *)
