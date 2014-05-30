@@ -103,8 +103,6 @@ store{DOT}{ID}           { printf("instruction STORE, modifier: %s\n", yytext + 
 
 /*
 
-line = { whitespace } [label] { whitespace } [ instruction | directive ] { whitespace } [comment]
-
 byte = 'byte'
 word = 'word'
 short = 'short'
@@ -124,17 +122,6 @@ stringdirective = dot 'string' whitespaceplus stringliteral
 directive = ( orgdirective | definedirective | memdirective | stringdirective )
 
 shift_type = ( rl | al | rr | ar )
-
-r0 = ( 'r' | 'R' ) '0'
-r1 = ( 'r' | 'R' ) '1'
-r2 = ( 'r' | 'R' ) '2'
-r3 = ( 'r' | 'R' ) '3'
-r4 = ( 'r' | 'R' ) '4'
-r5 = ( ( 'r' | 'R' ) '5' | 'fp' | 'FP' )
-r6 = ( ( 'r' | 'R' ) '6' | 'sp' | 'SP' )
-r7 = ( ( 'r' | 'R' ) '7' | 'pc' | 'PC' )
-
-register = ( r0 | r1 | r2 | r3 | r4 | r5 | r6 | r7 )
 
 instruction_direct = ( halt )
 
