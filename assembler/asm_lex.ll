@@ -1,7 +1,11 @@
 %{
+
 #include <string>
 
-    int curLine = 1;
+#include "asm_yacc.tab.hpp"
+
+int curLine = 1;
+
 %}
 
 DIGIT		[0-9]
@@ -16,128 +20,87 @@ ID		[a-zA-Z_][a-zA-Z_0-9]*
 
 %%
 
-\n              { curLine++; }
-[ \t]*{COMMA}[ \t]*         { printf("comma\n"); }
-[ \t]*         { /* discard whitespace */ }
-"/""/".*        {
-                    /* discard comments printf( "Comment: %s\n", yytext + 2); */
-                }
+\n|\r              { curLine++; return(NEWLINE); }
+[ \t]*{COMMA}[ \t]*         return(COMMA);
+[ \t]*         { }
+"/""/".*        { }
                 
 {DASH}?{DIGIT}+     {
-                     printf( "A decimal integer: %s (%d)\n", yytext,
+                     if(0)printf( "A decimal integer: %s (%d)\n", yytext,
                          atoi( yytext ) );
+                     return(INTEGER);
                 }
 
 0[Xx]{HEXDIGIT}+   {
-                     printf( "A hex integer: %s (%x)\n", yytext,
+                     if(0)printf( "A hex integer: %s (%lx)\n", yytext,
                          strtol( yytext , NULL, 16) );
+                     return(INTEGER);
                 }
 {QUOTE}{NOTQUOTE}*{QUOTE} {
                     std::string lit(yytext + 1, yytext + strlen(yytext) - 1);
-                    printf("string literal: \"%s\"\n", lit.c_str());
+                    if(0)printf("string literal: \"%s\"\n", lit.c_str());
+                     return(STRINGLITERAL);
                 }
 
-hlt             { printf("instruction HLT\n"); }
-swapcc          { printf("instruction SWAPCC\n"); }
-rsr             { printf("instruction RSR\n"); }
-push            { printf("instruction PUSh\n"); }
-pop             { printf("instruction POP\n"); }
-jl              { printf("instruction JL\n"); }
-jmp             { printf("instruction JMP\n"); }
-jne             { printf("instruction JNE\n"); }
-sys             { printf("instruction SYS\n"); }
-and             { printf("instruction AND\n"); }
-or              { printf("instruction OR\n"); }
-xor             { printf("instruction XOR\n"); }
-not             { printf("instruction NOT\n"); }
-add             { printf("instruction ADD\n"); }
-adc             { printf("instruction ADC\n"); }
-sub             { printf("instruction SUB\n"); }
-mult            { printf("instruction MULT\n"); }
-div             { printf("instruction DIV\n"); }
-cmp             { printf("instruction CMP\n"); }
-xchg            { printf("instruction XCHG\n"); }
-mov             { printf("instruction MOV\n"); }
-moviu           { printf("instruction MOVIU\n"); }
-addiu           { printf("instruction ADDIU\n"); }
-addi            { printf("instruction ADDI\n"); }
-cmpiu           { printf("instruction CMPIU\n"); }
-shift           { printf("instruction SHIFT\n"); }
-jr              { printf("instruction JR\n"); }
-jsr             { printf("instruction JSR\n"); }
-[Rr]{DIGIT}             { printf("register %d\n", atoi(yytext + 1)); }
-[pP][cC]                      { printf("register PC\n"); }
-[fF][pP]                      { printf("register FP\n"); }
-[sS][pP]                      { printf("register SP\n"); }
-shift{DOT}{ID}           { printf("instruction SHIFT, modifier: %s\n", yytext + 6); }
-load{DOT}{ID}            { printf("instruction LOAD, modifier: %s\n", yytext + 5); }
-store{DOT}{ID}           { printf("instruction STORE, modifier: %s\n", yytext + 6); }
+hlt		return(HLT);
+swapcc		return(SWAPCC);
+rsr		return(RSR);
+push		return(PUSH);
+pop		return(POP);
+jl		return(JL);
+jmp		return(JMP);
+jne		return(JNE);
+sys		return(SYS);
+and		return(AND);
+or		return(OR);
+xor		return(XOR);
+not		return(NOT);
+add		return(ADD);
+adc		return(ADC);
+sub		return(SUB);
+mult		return(MULT);
+div		return(DIV);
+cmp		return(CMP);
+xchg		return(XCHG);
+mov		return(MOV);
+moviu		return(MOVIU);
+addiu		return(ADDIU);
+addi		return(ADDI);
+cmpiu		return(CMPIU);
+jr		return(JR);
+jsr		return(JSR);
+shift		return(SHIFT);
+load		return(LOAD);
+store		return(STORE);
 
-{DOT}{ID}       {
-                    std::string dir(yytext + 1);
-                    printf("directive: \"%s\"\n", dir.c_str());
-                }
+[Rr]{DIGIT}*     return(REGISTER); // ALSO store the number
+[fF][pP]        return(REGISTER); // ALSO store the number, 5
+[sS][pP]        return(REGISTER); // ALSO store the number, 6
+[pP][cC]        return(REGISTER); // ALSO store the number, 7
+
+{DOT}lr        return(DOT_LR);
+{DOT}ll        return(DOT_LL);
+{DOT}ar        return(DOT_AR);
+{DOT}al        return(DOT_AL);
+
+{DOT}org       return(DOT_ORG);
+{DOT}byte       return(DOT_BYTE);
+{DOT}short       return(DOT_SHORT);
+{DOT}word       return(DOT_WORD);
+{DOT}string       return(DOT_STRING);
+{DOT}define       return(DOT_DEFINE);
 
 {ID}            {
                     std::string label(yytext);
-                    printf("identifier: \"%s\"\n", label.c_str());
+                    if(0)printf("identifier: \"%s\"\n", label.c_str());
+                    return(IDENTIFIER);
                 }
 {ID}{COLON}     {
                     std::string label(yytext, yytext + strlen(yytext) - 1);
-                    printf("label: \"%s\"\n", label.c_str());
+                    if(0)printf("label: \"%s\"\n", label.c_str());
+                    return(LABEL);
                 }
-. { printf("\nBLARG \"%s\"\n\n", yytext); }
+. { if(0)printf("\nsyntax error: %d\n", yytext[0]); }
 
 %%
 
-         int main( int argc, char **argv )
-             {
-             if ( argc > 1 )
-                     yyin = fopen( argv[1], "r" );
-             else
-                     yyin = stdin;
-     
-             yylex();
-             }
-
-
-/*
-
-byte = 'byte'
-word = 'word'
-short = 'short'
-string = 'string'
-
-size_modifier = ( byte | word | short )
-
-definedirective = dot 'define' whitespaceplus identifier whitespaceplus number
-(* store an identifier with value number *)
-
-memdirective = dot size_modifier whitespaceplus number { comma_delim number }
-(* maybe pad address to size; set any labels; store numbers, checking sizes, incrementing by address size *)
-
-stringdirective = dot 'string' whitespaceplus stringliteral
-(* set any labels ; store string, incrementing address by size of string *)
-
-directive = ( orgdirective | definedirective | memdirective | stringdirective )
-
-shift_type = ( rl | al | rr | ar )
-
-instruction_direct = ( halt )
-
-instruction_rx = ( swapcc | rsr | push | pop ) whitespaceplus register
-
-instruction_imm = ( jl | jmp | jne | sys ) whitespaceplus ( number | identifier )
-
-instruction_rxry = ( and | or | xor | not | add | adc | sub | mult | div | cmp | xchg | mov ) whitespaceplus register comma_delim register
-
-instruction_rximm = ( moviu | addiu | addi | cmpiu | jr | jsr ) whitespaceplus register comma_delim (number | identifier)
-
-instruction_rximm_size = ( shift ) dot shift_type whitespaceplus register comma_delim ( number | identifier )
-
-instruction_rxryimm = ( load | store ) dot size_modifier whitespaceplus register comma_delim register COMMAspace ( number | identifier )
-
-(* pad address to 4; set any labels ; store instruction to set later *)
-(* go through instructions, evaluate data parameters, check size of data, store *)
-
-*/

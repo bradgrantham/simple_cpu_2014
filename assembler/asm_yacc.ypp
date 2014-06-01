@@ -1,0 +1,200 @@
+%{
+
+#include <stdio.h>
+
+#define YYERROR_VERBOSE
+
+extern int curLine;
+int yylex();
+void yyerror(const char *s);
+
+%}
+
+%token COMMA INTEGER STRINGLITERAL HLT SWAPCC RSR PUSH POP JL JMP JNE SYS AND OR XOR NOT ADD ADC SUB MULT DIV CMP XCHG MOV MOVIU ADDIU ADDI CMPIU SHIFT JR JSR LOAD STORE REGISTER IDENTIFIER LABEL DOT_ORG DOT_DEFINE DOT_BYTE DOT_SHORT DOT_WORD DOT_STRING DOT_LR DOT_LL DOT_AR DOT_AL NEWLINE
+
+%%
+
+file :
+          lines { if(0)printf("file\n"); }
+        ;
+
+lines :
+          line 
+        | lines line
+        ;
+
+line :
+          instruction_line { printf("instr line\n"); }
+        | directive_line { printf("dir line\n"); }
+        | label_only_line { printf("label line\n"); }
+        | empty_line { printf("empty line\n"); }
+        ;
+
+instruction_line :
+          LABEL instruction NEWLINE { if(0)printf("label instr\n"); }
+        | instruction NEWLINE { if(0)printf("instr alone\n"); }
+        ;
+
+directive_line :
+          LABEL directive NEWLINE { if(0)printf("label dir\n"); }
+        | directive NEWLINE { if(0)printf("dir alone\n"); }
+        ;
+
+label_only_line :
+          LABEL NEWLINE { if(0)printf("label only\n"); }
+        ;
+
+empty_line :
+          NEWLINE
+        ;
+
+directive :
+          org_directive { if(0)printf("org dir\n"); }
+        | mem_directive { if(0)printf("mem dir\n"); }
+        | string_directive { if(0)printf("string dir\n"); }
+        | define_directive { if(0)printf("define dir\n"); }
+        ;
+
+instruction :
+          instruction_direct { if(0)printf("instr direct\n"); }
+        | instruction_imm { if(0)printf("instr imm\n"); }
+        | instruction_rx { if(0)printf("instr rx\n"); }
+        | instruction_rximm { if(0)printf("instr rximm\n"); }
+        | instruction_rximm_varied { if(0)printf("instr rximm_varied\n"); }
+        | instruction_rxry { if(0)printf("instr rxry\n"); }
+        | instruction_rxryimm_sized { if(0)printf("instr rxryimm_sized\n"); }
+        ;
+
+org_directive :
+          dot_org INTEGER { if(0)printf("org\n"); }
+        ;
+
+dot_org :
+          DOT_ORG { if(0)printf("dot org\n"); }
+        ;
+
+define_directive :
+          DOT_DEFINE IDENTIFIER expression { if(0)printf("define\n"); }
+        ;
+/* store an identifier with value number */
+
+expression_list :
+          expression { if(0)printf("expression alone\n"); }
+        | expression COMMA expression_list { if(0)printf("expression list\n"); }
+        ;
+mem_directive :
+          size_modifier expression_list { if(0)printf("mem\n"); }
+        ;
+/* maybe pad address to size; set any labels; store numbers, checking sizes, incrementing by address size */
+
+instruction_direct : 
+          mnemonic_direct { if(0)printf("direct\n"); }
+        ;
+mnemonic_direct : 
+          HLT { if(0)printf("hlt\n"); }
+        ;
+
+instruction_rx :
+          mnemonic_rx REGISTER { if(0)printf("instruction_rx\n"); }
+        ;
+mnemonic_rx :
+          SWAPCC { if(0)printf("swapcc\n"); }
+        | RSR { if(0)printf("rsr\n"); }
+        | PUSH { if(0)printf("push\n"); }
+        | POP { if(0)printf("pop\n"); }
+        ;
+
+instruction_imm : mnemonic_imm expression { if(0)printf("imm\n"); }
+        ;
+mnemonic_imm :
+          JL { if(0)printf("jl\n"); }
+        | JMP { if(0)printf("jmp\n"); }
+        | JNE { if(0)printf("jne\n"); }
+        | SYS { if(0)printf("sys\n"); }
+        ;
+
+instruction_rxry :
+          mnemonic_rxry REGISTER COMMA REGISTER { if(0)printf("rxry\n"); }
+        ;
+mnemonic_rxry :
+          AND { if(0)printf("and\n"); }
+        | OR { if(0)printf("or\n"); }
+        | XOR { if(0)printf("xor\n"); }
+        | NOT { if(0)printf("not\n"); }
+        | ADD { if(0)printf("add\n"); }
+        | ADC { if(0)printf("adc\n"); }
+        | SUB { if(0)printf("sub\n"); }
+        | MULT { if(0)printf("mult\n"); }
+        | DIV { if(0)printf("div\n"); }
+        | CMP { if(0)printf("cmp\n"); }
+        | XCHG { if(0)printf("xchg\n"); }
+        | MOV { if(0)printf("mov\n"); }
+        ;
+
+instruction_rximm :
+          mnemonic_rximm REGISTER COMMA expression { if(0)printf("rximm\n"); }
+        ;
+mnemonic_rximm :
+          MOVIU { if(0)printf("moviu\n"); }
+        | ADDIU { if(0)printf("addiu\n"); }
+        | ADDI { if(0)printf("addi\n"); }
+        | CMPIU { if(0)printf("cmpiu\n"); }
+        | JR { if(0)printf("jr\n"); }
+        | JSR { if(0)printf("jsr\n"); }
+        ;
+
+instruction_rximm_varied :
+          mnemonic_rximm_varied shift_type REGISTER COMMA expression { if(0)printf("instruction_rximm_varied\n"); }
+        ;
+mnemonic_rximm_varied :
+          SHIFT { if(0)printf("instruction_rximm_varied\n"); }
+        ;
+shift_type :
+          DOT_AL { if(0)printf(".al\n"); }
+        | DOT_AR { if(0)printf(".ar\n"); }
+        | DOT_LL { if(0)printf(".ll\n"); }
+        | DOT_LR { if(0)printf(".lr\n"); }
+        ;
+
+instruction_rxryimm_sized :
+          mnemonic_rxryimm_sized size_modifier REGISTER COMMA REGISTER { if(0)printf("instruction_rxryimm_size\n"); }
+        ;
+mnemonic_rxryimm_sized :
+          LOAD { if(0)printf("load\n"); }
+        | STORE { if(0)printf("store\n"); }
+        ;
+size_modifier :
+          DOT_BYTE { if(0)printf(".byte\n"); }
+        | DOT_WORD { if(0)printf(".word\n"); }
+        | DOT_SHORT { if(0)printf(".short\n"); }
+        ;
+/* pad address to 4; set any labels ; store instruction to set later */
+/* go through instructions, evaluate data parameters, check size of data, store */
+
+string_directive :
+          DOT_STRING STRINGLITERAL { if(0)printf("string\n"); }
+        ;
+/* set any labels ; store string, incrementing address by size of string */
+
+expression :
+          INTEGER { if(0)printf("integer\n"); }
+        | IDENTIFIER { if(0)printf("identifier\n"); }
+        ;
+
+
+%%
+
+extern FILE *yyin;
+
+int main( int argc, char **argv )
+{
+    yyin = stdin;
+    while(!feof(yyin)) {
+        yyparse();
+    }
+}
+
+void yyerror(const char *s)
+{
+    fprintf(stderr, "line %d: %s\n", curLine, s);
+}
