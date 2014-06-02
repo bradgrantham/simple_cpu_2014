@@ -21,6 +21,7 @@ ID		[a-zA-Z_][a-zA-Z_0-9]*
 %%
 
 \n|\r              { curLine++; return(NEWLINE); }
+<<EOF>>         { static bool saweof = false; if(!saweof) { saweof = true; return(NEWLINE); } else { return 0; } }
 [ \t]*{COMMA}[ \t]*         return(COMMA);
 [ \t]*         { }
 "/""/".*        { }
