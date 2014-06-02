@@ -4,9 +4,29 @@
 
 #include "asm_yacc.tab.hpp"
 
+#define YY_NO_UNPUT
+
 int curLine = 1;
 
+void yyerror(const char *);
+
+void 
+yyerrorf(const char *fmt, ...)
+{
+    va_list args;
+    char dummy[1024];
+
+    va_start(args, fmt);
+    vsprintf(dummy, fmt, args);
+    va_end(args);
+    
+    yyerror(dummy);
+}
+
+
 %}
+
+%option nounput
 
 DIGIT		[0-9]
 QUOTE		["]
@@ -104,10 +124,7 @@ store		        return(STORE);
                             yylval.str = new std::string(yytext, yytext + strlen(yytext) - 1);
                             return(LABEL);
                         }
-.                       {       
-                            yylval.i = yytext[0];
-                            return(UNEXPECTED_CHARACTER);
-                        }
+.                       { yyerrorf("unexpected character: %02X, '%c'\n", yytext[0], yytext[0]); yyterminate(); }
 
 %%
 

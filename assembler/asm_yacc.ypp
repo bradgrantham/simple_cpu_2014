@@ -16,7 +16,7 @@ void yyerror(const char *s);
     std::string *str;
 }
 
-%token COMMA INTEGER STRINGLITERAL HLT SWAPCC RSR PUSH POP JL JMP JNE SYS AND OR XOR NOT ADD ADC SUB MULT DIV CMP XCHG MOV MOVIU ADDIU ADDI CMPIU SHIFT JR JSR LOAD STORE REGISTER IDENTIFIER LABEL DOT_ORG DOT_DEFINE DOT_BYTE DOT_SHORT DOT_WORD DOT_STRING DOT_LR DOT_LL DOT_AR DOT_AL NEWLINE UNEXPECTED_CHARACTER
+%token COMMA INTEGER STRINGLITERAL HLT SWAPCC RSR PUSH POP JL JMP JNE SYS AND OR XOR NOT ADD ADC SUB MULT DIV CMP XCHG MOV MOVIU ADDIU ADDI CMPIU SHIFT JR JSR LOAD STORE REGISTER IDENTIFIER LABEL DOT_ORG DOT_DEFINE DOT_BYTE DOT_SHORT DOT_WORD DOT_STRING DOT_LR DOT_LL DOT_AR DOT_AL NEWLINE
 
 %%
 
@@ -106,7 +106,7 @@ mnemonic_direct :
         ;
 
 instruction_rx :
-          mnemonic_rx REGISTER { if(0)printf("instruction_rx\n"); }
+          mnemonic_rx register { if(0)printf("instruction_rx\n"); }
         ;
 mnemonic_rx :
           SWAPCC { if(0)printf("swapcc\n"); }
@@ -125,7 +125,7 @@ mnemonic_imm :
         ;
 
 instruction_rxry :
-          mnemonic_rxry REGISTER COMMA REGISTER { if(0)printf("rxry\n"); }
+          mnemonic_rxry register COMMA register { if(0)printf("rxry\n"); }
         ;
 mnemonic_rxry :
           AND { if(0)printf("and\n"); }
@@ -143,7 +143,7 @@ mnemonic_rxry :
         ;
 
 instruction_rximm :
-          mnemonic_rximm REGISTER COMMA expression { if(0)printf("rximm\n"); }
+          mnemonic_rximm register COMMA expression { if(0)printf("rximm\n"); }
         ;
 mnemonic_rximm :
           MOVIU { if(0)printf("moviu\n"); }
@@ -155,7 +155,7 @@ mnemonic_rximm :
         ;
 
 instruction_rximm_varied :
-          mnemonic_rximm_varied shift_type REGISTER COMMA expression { if(0)printf("instruction_rximm_varied\n"); }
+          mnemonic_rximm_varied shift_type register COMMA expression { if(0)printf("instruction_rximm_varied\n"); }
         ;
 mnemonic_rximm_varied :
           SHIFT { if(0)printf("instruction_rximm_varied\n"); }
@@ -168,7 +168,7 @@ shift_type :
         ;
 
 instruction_rxryimm_sized :
-          mnemonic_rxryimm_sized size_modifier REGISTER COMMA REGISTER { if(0)printf("instruction_rxryimm_size\n"); }
+          mnemonic_rxryimm_sized size_modifier register COMMA register { if(0)printf("instruction_rxryimm_size\n"); }
         ;
 mnemonic_rxryimm_sized :
           LOAD { if(0)printf("load\n"); }
@@ -183,7 +183,7 @@ size_modifier :
 /* go through instructions, evaluate data parameters, check size of data, store */
 
 string_directive :
-          DOT_STRING STRINGLITERAL { if(0)printf("string\n"); }
+          DOT_STRING string_literal { if(0)printf("string\n"); }
         ;
 /* set any labels ; store string, incrementing address by size of string */
 
@@ -195,6 +195,14 @@ expression :
 integer:
           INTEGER { printf("integer %d\n", yylval.i); }
         ;
+
+register:
+          REGISTER { printf("register %d\n", yylval.i); }
+        ;
+
+string_literal:
+          STRINGLITERAL { printf("string literal: \"%s\"\n", yylval.str->c_str()); delete yylval.str; }
+
 
 %%
 
