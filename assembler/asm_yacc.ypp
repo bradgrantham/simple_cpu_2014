@@ -1,5 +1,6 @@
 %{
 
+#include <string>
 #include <stdio.h>
 
 #define YYERROR_VERBOSE
@@ -10,7 +11,12 @@ void yyerror(const char *s);
 
 %}
 
-%token COMMA INTEGER STRINGLITERAL HLT SWAPCC RSR PUSH POP JL JMP JNE SYS AND OR XOR NOT ADD ADC SUB MULT DIV CMP XCHG MOV MOVIU ADDIU ADDI CMPIU SHIFT JR JSR LOAD STORE REGISTER IDENTIFIER LABEL DOT_ORG DOT_DEFINE DOT_BYTE DOT_SHORT DOT_WORD DOT_STRING DOT_LR DOT_LL DOT_AR DOT_AL NEWLINE
+%union {
+    int         i;
+    std::string *str;
+}
+
+%token COMMA INTEGER STRINGLITERAL HLT SWAPCC RSR PUSH POP JL JMP JNE SYS AND OR XOR NOT ADD ADC SUB MULT DIV CMP XCHG MOV MOVIU ADDIU ADDI CMPIU SHIFT JR JSR LOAD STORE REGISTER IDENTIFIER LABEL DOT_ORG DOT_DEFINE DOT_BYTE DOT_SHORT DOT_WORD DOT_STRING DOT_LR DOT_LL DOT_AR DOT_AL NEWLINE UNEXPECTED_CHARACTER
 
 %%
 
@@ -30,18 +36,23 @@ line :
         | empty_line { printf("empty line\n"); }
         ;
 
+
 instruction_line :
-          LABEL instruction NEWLINE { if(0)printf("label instr\n"); }
+          label instruction NEWLINE { if(0)printf("label instr\n"); }
         | instruction NEWLINE { if(0)printf("instr alone\n"); }
         ;
 
 directive_line :
-          LABEL directive NEWLINE { if(0)printf("label dir\n"); }
+          label directive NEWLINE { if(0)printf("label: dir\n"); }
         | directive NEWLINE { if(0)printf("dir alone\n"); }
         ;
 
 label_only_line :
-          LABEL NEWLINE { if(0)printf("label only\n"); }
+          label NEWLINE { if(0)printf("label only\n"); }
+        ;
+
+label :
+          LABEL { printf("label: %s\n", yylval.str->c_str()); delete yylval.str; }
         ;
 
 empty_line :
@@ -66,7 +77,7 @@ instruction :
         ;
 
 org_directive :
-          dot_org INTEGER { if(0)printf("org\n"); }
+          dot_org integer { if(0)printf("org\n"); }
         ;
 
 dot_org :
@@ -177,10 +188,13 @@ string_directive :
 /* set any labels ; store string, incrementing address by size of string */
 
 expression :
-          INTEGER { if(0)printf("integer\n"); }
+          integer { if(0)printf("integer\n"); }
         | IDENTIFIER { if(0)printf("identifier\n"); }
         ;
 
+integer:
+          INTEGER { printf("integer %d\n", yylval.i); }
+        ;
 
 %%
 
