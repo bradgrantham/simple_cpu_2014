@@ -1,7 +1,7 @@
 CXXFLAGS=-I/opt/local/include/ -Wall --std=c++11 -O3
-LDFLAGS=-L/opt/local/lib/ -lboost_program_options-mt
+LDFLAGS=-L/opt/local/lib/ -lboost_program_options-mt -lboost_regex-mt
 
-all: memory_test sim hello
+all: memory_test sim hello 
 
 memory_test.o: simple_cpu_2014.hpp util.hpp
 hello.o: simple_cpu_2014.hpp util.hpp
