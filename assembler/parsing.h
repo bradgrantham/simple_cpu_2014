@@ -14,12 +14,12 @@ struct ExprBase;
 typedef std::pair<boost::shared_ptr<ExprBase>, uint> LineNumberExpr;
 typedef std::map<std::string, LineNumberExpr> labels_map;
 
-bool ResolveExpression(const std::string& str, uint line, labels_map& labels, uint *value);
+bool ResolveExpression(const std::string& str, uint linenum, labels_map& labels, uint *value);
 
 struct ExprBase
 {
     typedef boost::shared_ptr<ExprBase> sptr;
-    virtual bool eval(labels_map& labels, uint line, uint *value) = 0;
+    virtual bool eval(labels_map& labels, uint linenum, uint *value) = 0;
     virtual ~ExprBase() {}
 };
 
@@ -27,7 +27,7 @@ struct ExprInt : public ExprBase
 {
     typedef boost::shared_ptr<ExprInt> sptr;
     uint u;
-    virtual bool eval(labels_map& labels, uint line, uint *value);
+    virtual bool eval(labels_map& labels, uint linenum, uint *value);
     ExprInt(uint u_) :
         u(u_)
         {}
@@ -38,7 +38,7 @@ struct ExprIdent : public ExprBase
 {
     typedef boost::shared_ptr<ExprIdent> sptr;
     std::string s;
-    virtual bool eval(labels_map& labels, uint line, uint *value);
+    virtual bool eval(labels_map& labels, uint linenum, uint *value);
     ExprIdent(const std::string &s_) :
         s(s_),
         visited(false)
@@ -77,18 +77,21 @@ struct OutputFile
     {
         printf("%08X: %02X\n", address, v);
     }
+    void Finish()
+    {
+    }
 };
 
 struct Instruction
 {
     typedef boost::shared_ptr<Instruction> sptr;
     uint address;
-    uint line;
+    uint linenum;
     uint opcode;
     virtual bool Store(labels_map& labels, OutputFile& file) = 0;
-    Instruction(uint address_, uint line_, uint opcode_) :
+    Instruction(uint address_, uint linenum_, uint opcode_) :
         address(address_),
-        line(line_),
+        linenum(linenum_),
         opcode(opcode_)
     {}
     virtual ~Instruction() {}
@@ -97,8 +100,8 @@ struct Instruction
 struct InstructionDirect : public Instruction
 {
     typedef boost::shared_ptr<InstructionDirect> sptr;
-    InstructionDirect(uint address_, uint line_, uint opcode_) :
-        Instruction(address_, line_, opcode_)
+    InstructionDirect(uint address_, uint linenum_, uint opcode_) :
+        Instruction(address_, linenum_, opcode_)
         {}
     virtual bool Store(labels_map& labels, OutputFile& file);
     virtual ~InstructionDirect() {}
@@ -108,13 +111,88 @@ struct InstructionRX : public Instruction
 {
     uint rx;
     typedef boost::shared_ptr<InstructionRX> sptr;
-    InstructionRX(uint address_, uint line_, uint opcode_, uint rx_) :
-        Instruction(address_, line_, opcode_),
+    InstructionRX(uint address_, uint linenum_, uint opcode_, uint rx_) :
+        Instruction(address_, linenum_, opcode_),
         rx(rx_)
         {}
     virtual bool Store(labels_map& labels, OutputFile& file);
     virtual ~InstructionRX() {}
 };
+
+struct InstructionRXRY : public Instruction
+{
+    uint rx;
+    uint ry;
+    typedef boost::shared_ptr<InstructionRXRY> sptr;
+    InstructionRXRY(uint address_, uint linenum_, uint opcode_, uint rx_, uint ry_) :
+        Instruction(address_, linenum_, opcode_),
+        rx(rx_),
+        ry(ry_)
+        {}
+    virtual bool Store(labels_map& labels, OutputFile& file);
+    virtual ~InstructionRXRY() {}
+};
+
+struct InstructionImm : public Instruction
+{
+    ExprBase::sptr imm;
+    typedef boost::shared_ptr<InstructionImm> sptr;
+    InstructionImm(uint address_, uint linenum_, uint opcode_, const ExprBase::sptr& imm_) :
+        Instruction(address_, linenum_, opcode_),
+        imm(imm_)
+        {}
+    virtual bool Store(labels_map& labels, OutputFile& file);
+    virtual ~InstructionImm() {}
+};
+
+struct InstructionRXImmModified : public Instruction
+{
+    uint modifier;
+    uint rx;
+    ExprBase::sptr imm;
+    typedef boost::shared_ptr<InstructionRXImmModified> sptr;
+    InstructionRXImmModified(uint address_, uint linenum_, uint opcode_, uint modifier_, uint rx_, const ExprBase::sptr& imm_) :
+        Instruction(address_, linenum_, opcode_),
+        modifier(modifier_),
+        rx(rx_),
+        imm(imm_)
+        {}
+    virtual bool Store(labels_map& labels, OutputFile& file);
+    virtual ~InstructionRXImmModified() {}
+};
+
+struct InstructionRXImm : public Instruction
+{
+    uint rx;
+    ExprBase::sptr imm;
+    typedef boost::shared_ptr<InstructionRXImm> sptr;
+    InstructionRXImm(uint address_, uint linenum_, uint opcode_, uint rx_, const ExprBase::sptr& imm_) :
+        Instruction(address_, linenum_, opcode_),
+        rx(rx_),
+        imm(imm_)
+        {}
+    virtual bool Store(labels_map& labels, OutputFile& file);
+    virtual ~InstructionRXImm() {}
+};
+
+struct InstructionRXRYImmModified : public Instruction
+{
+    uint modifier;
+    uint rx;
+    uint ry;
+    ExprBase::sptr imm;
+    typedef boost::shared_ptr<InstructionRXRYImmModified> sptr;
+    InstructionRXRYImmModified(uint address_, uint linenum_, uint opcode_, uint modifier_, uint rx_, uint ry_, const ExprBase::sptr& imm_) :
+        Instruction(address_, linenum_, opcode_),
+        modifier(modifier_),
+        rx(rx_),
+        ry(ry_),
+        imm(imm_)
+        {}
+    virtual bool Store(labels_map& labels, OutputFile& file);
+    virtual ~InstructionRXRYImmModified() {}
+};
+
 
 struct Store
 {

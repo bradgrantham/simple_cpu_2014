@@ -22,11 +22,11 @@ loop:   store.short r0, r1
 
 test:   // some simple instruction tests
         moviu r3, 0x1234
-        addi r3, 0x5678 // r3 = 0x12345678
+        addi r3, 0x5678         // r3 = 0x12345678
         push r3
-        pop r4            // r4 = 0x12345678
-        store.word r5, r3 // *(short*)r5 = 0x5678
-        load.word r6, r5  // r6 = *(r5) = 0x5678
+        pop r4                  // r4 = 0x12345678
+        store.word r5, r3       // *(short*)r5 = 0x5678
+        load.word r6, r5        // r6 = *(r5) = 0x5678
         mult r0, r3
         hlt
 

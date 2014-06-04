@@ -43,6 +43,23 @@ uint32_t format18_(uint32_t dst, uint32_t src, uint32_t size, uint32_t data18)
 }
 
 
+static inline uint32_t format21(uint32_t op, uint32_t dst, uint32_t size, uint32_t data21)
+{
+    return
+        (op << 27) | 
+        (dst << 24) | 
+        (size << 21) | 
+        (data21 & maskbits(21)) ;
+
+}
+
+template <uint32_t OP>
+uint32_t format21_(uint32_t dst, uint32_t src, uint32_t size, uint32_t data21)
+{
+    return format21(OP, dst, size, data21);
+}
+
+
 static inline uint32_t format24(uint32_t op, uint32_t dst, uint32_t data24)
 {
     return

@@ -66,8 +66,8 @@ namespace opcode {
 
     const uint SYS = 0x1b;
     const uint SWAPCC = 0x1c;
-    const uint UNUSED_1d = 0x1d;
-    const uint UNUSED_1e = 0x1e;
+    // const uint UNUSED_1d = 0x1d;
+    // const uint UNUSED_1e = 0x1e;
     const uint HALT = 0x1f;
 };
 
@@ -88,10 +88,10 @@ void PadAddressAndAssignLabels(uint linenumber, uint& address, uint pad)
 }
 
 /* set expression list to store */
-void SaveExpressions(uint line, uint& address, int size, ExprList* list)
+void SaveExpressions(uint linenum, uint& address, int size, ExprList* list)
 {
     boost::shared_ptr<ExprList> exprs(list);
-    stores.push_back(Store(line, address, size, *list));
+    stores.push_back(Store(linenum, address, size, *list));
     address += size * list->size();
 }
 
@@ -137,6 +137,7 @@ file :
               {
                   StoreMemoryDirectives(labels, file, stores);
                   StoreInstructions(labels, file, instructions);
+                  file.Finish();
               }
         ;
 /* store memory directives, checking sizes, incrementing by address size */
@@ -240,7 +241,8 @@ string_directive :
           DOT_STRING STRINGLITERAL
               {
                   PadAddressAndAssignLabels(curLine, curAddress, 1);
-                  fprintf(stderr, "XXX string literal unhandled\n");
+                  for(auto it = $2->begin(); it != $2->end(); it++)
+                      file.Store8(curAddress++, *it);
                   curAddress += $2->size();
               }
         ;
@@ -267,7 +269,7 @@ instruction_rx :
                   Instruction::sptr ins(new InstructionRX(curAddress, curLine, $1, $2));
                   instructions.push_back(ins);
                   curAddress += 4;
-                  }
+              }
         ;
 mnemonic_rx :
           SWAPCC { $$ = opcode::SWAPCC; }
@@ -280,7 +282,10 @@ instruction_imm :
           mnemonic_imm expression
               {
                   PadAddressAndAssignLabels(curLine, curAddress, 4);
-                  if(0)printf("imm\n");
+                  ExprBase::sptr e($2);
+                  Instruction::sptr ins(new InstructionImm(curAddress, curLine, $1, e));
+                  instructions.push_back(ins);
+                  curAddress += 4;
               }
         ;
 mnemonic_imm :
@@ -294,7 +299,9 @@ instruction_rxry :
           mnemonic_rxry REGISTER COMMA REGISTER
               {
                   PadAddressAndAssignLabels(curLine, curAddress, 4);
-                  if(0)printf("rxry\n");
+                  Instruction::sptr ins(new InstructionRXRY(curAddress, curLine, $1, $2, $4));
+                  instructions.push_back(ins);
+                  curAddress += 4;
               }
         ;
 mnemonic_rxry :
@@ -316,7 +323,10 @@ instruction_rximm :
           mnemonic_rximm REGISTER COMMA expression
               {
                   PadAddressAndAssignLabels(curLine, curAddress, 4);
-                  if(0)printf("rximm\n");
+                  ExprBase::sptr e($4);
+                  Instruction::sptr ins(new InstructionRXImm(curAddress, curLine, $1, $2, e));
+                  instructions.push_back(ins);
+                  curAddress += 4;
               }
         ;
 mnemonic_rximm :
@@ -332,7 +342,10 @@ instruction_rximm_varied :
           mnemonic_rximm_varied shift_type REGISTER COMMA expression
               {
                   PadAddressAndAssignLabels(curLine, curAddress, 4);
-                  if(0)printf("instruction_rximm_varied\n");
+                  ExprBase::sptr e($5);
+                  Instruction::sptr ins(new InstructionRXImmModified(curAddress, curLine, $1, $2, $3, e));
+                  instructions.push_back(ins);
+                  curAddress += 4;
               }
         ;
 mnemonic_rximm_varied :
@@ -346,10 +359,21 @@ shift_type :
         ;
 
 instruction_rxryimm_sized :
-          mnemonic_rxryimm_sized size_modifier REGISTER COMMA REGISTER
+          mnemonic_rxryimm_sized size_modifier REGISTER COMMA REGISTER COMMA expression
               {
                   PadAddressAndAssignLabels(curLine, curAddress, 4);
-                  if(0)printf("instruction_rxryimm_size\n");
+                  ExprBase::sptr e($7);
+                  Instruction::sptr ins(new InstructionRXRYImmModified(curAddress, curLine, $1, $2, $3, $5, e));
+                  instructions.push_back(ins);
+                  curAddress += 4;
+              }
+        | mnemonic_rxryimm_sized size_modifier REGISTER COMMA REGISTER 
+              {
+                  PadAddressAndAssignLabels(curLine, curAddress, 4);
+                  ExprBase::sptr e(new ExprInt(0));
+                  Instruction::sptr ins(new InstructionRXRYImmModified(curAddress, curLine, $1, $2, $3, $5, e));
+                  instructions.push_back(ins);
+                  curAddress += 4;
               }
         ;
 mnemonic_rxryimm_sized :

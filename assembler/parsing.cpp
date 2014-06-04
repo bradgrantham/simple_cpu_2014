@@ -1,16 +1,16 @@
 #include <iostream>
 #include "parsing.h"
 
-bool ExprInt::eval(labels_map& labels, uint line, uint *value)
+bool ExprInt::eval(labels_map& labels, uint linenum, uint *value)
 {
     *value = u;
     return true;
 }
 
-bool ExprIdent::eval(labels_map& labels, uint line, uint *value)
+bool ExprIdent::eval(labels_map& labels, uint linenum, uint *value)
 {
     if(visited) {
-        std::cerr << "circular reference to identifier \"" << s << "\" at line " << line << " will evaluate to 0" << std::endl;
+        std::cerr << "circular reference to identifier \"" << s << "\" at line " << linenum << " will evaluate to 0" << std::endl;
         *value = 0;
         return false;
     }
@@ -26,7 +26,7 @@ bool ExprIdent::eval(labels_map& labels, uint line, uint *value)
         return result;
     }
 
-    std::cerr << "unresolved identifier \"" << s << "\" in expression at line " << line << " will evaluate to 0" << std::endl;
+    std::cerr << "unresolved identifier \"" << s << "\" in expression at line " << linenum << " will evaluate to 0" << std::endl;
     *value = 0;
     visited = false;
     return false;
@@ -39,11 +39,58 @@ bool InstructionDirect::Store(labels_map& labels, OutputFile& file)
     return true;
 }
 
+bool InstructionRXRY::Store(labels_map& labels, OutputFile& file)
+{
+    uint instruction = simple_cpu_2014::format18(opcode, rx, ry, 0, 0);
+    file.Store32(address, instruction);
+    return true;
+}
+
 bool InstructionRX::Store(labels_map& labels, OutputFile& file)
 {
     uint instruction = simple_cpu_2014::format24(opcode, rx, 0);
     file.Store32(address, instruction);
     return true;
+}
+
+bool InstructionImm::Store(labels_map& labels, OutputFile& file)
+{
+    unsigned int u;
+    bool success = imm->eval(labels, linenum, &u);
+    // XXX check size of item
+    uint instruction = simple_cpu_2014::format27(opcode, u);
+    file.Store32(address, instruction);
+    return success;
+}
+
+bool InstructionRXImm::Store(labels_map& labels, OutputFile& file)
+{
+    unsigned int u;
+    bool success = imm->eval(labels, linenum, &u);
+    // XXX check size of item
+    uint instruction = simple_cpu_2014::format24(opcode, rx, u);
+    file.Store32(address, instruction);
+    return success;
+}
+
+bool InstructionRXImmModified::Store(labels_map& labels, OutputFile& file)
+{
+    unsigned int u;
+    bool success = imm->eval(labels, linenum, &u);
+    // XXX check size of item
+    uint instruction = simple_cpu_2014::format21(opcode, rx, modifier, u);
+    file.Store32(address, instruction);
+    return success;
+}
+
+bool InstructionRXRYImmModified::Store(labels_map& labels, OutputFile& file)
+{
+    unsigned int u;
+    bool success = imm->eval(labels, linenum, &u);
+    // XXX check size of item
+    uint instruction = simple_cpu_2014::format18(opcode, rx, ry, modifier, u);
+    file.Store32(address, instruction);
+    return success;
 }
 
 bool StoreInstructions(labels_map& labels, OutputFile& file, std::vector<Instruction::sptr>& instrs)
@@ -58,12 +105,13 @@ bool StoreInstructions(labels_map& labels, OutputFile& file, std::vector<Instruc
 
 bool StoreMemoryDirectives(labels_map& labels, OutputFile& file, std::vector<Store>& stores)
 {
+    bool success = true;
     for(auto it = stores.begin(); it != stores.end(); it++) {
         Store& store = *it;
         unsigned int address = store.address;
         for(auto m = store.exprs.begin(); m != store.exprs.end(); m++) {
             unsigned int u;
-            bool success = (*m)->eval(labels, store.linenum, &u);
+            bool result = (*m)->eval(labels, store.linenum, &u);
             // XXX check size of item
             if(store.size == 1)
                 file.Store8(address, u);
@@ -72,7 +120,8 @@ bool StoreMemoryDirectives(labels_map& labels, OutputFile& file, std::vector<Sto
             else if(store.size == 4)
                 file.Store32(address, u);
             address += store.size;
+            success = success && result;
         }
     }
-    return true;
+    return success;
 }
