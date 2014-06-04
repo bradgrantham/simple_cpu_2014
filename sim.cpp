@@ -444,7 +444,7 @@ state s;
 
 namespace po = boost::program_options;
 
-enum verbosity {
+enum VerbosityLevel {
     ERROR = 0,
     WARNING = 1,
     INFO = 2,
@@ -459,7 +459,7 @@ int main(int argc, char **argv)
     po::options_description desc("Simulator options");
     desc.add_options()
         ("help", "produce help message")
-        ("verbose", po::value<int>(&verbosity)->default_value(verbosity::ERROR), "set verbosity level")
+        ("verbose", po::value<int>(&verbosity)->default_value(VerbosityLevel::ERROR), "set verbosity level")
     ;
 
     po::variables_map vm;
@@ -486,7 +486,7 @@ int main(int argc, char **argv)
             continue;
         }
 
-        if(verbosity >= verbosity::DEBUG) {
+        if(verbosity >= VerbosityLevel::DEBUG) {
             printf("decoded %s", opcodes[instr.opcode].name);
             if(opcodes[instr.opcode].datasize == 18) {
                 printf(", dst = %d, src = %d, size = %d, data = 0x%X\n", instr.dst, instr.src, instr.size, instr.data);
@@ -504,7 +504,7 @@ int main(int argc, char **argv)
         }
         instructions++;
 
-        if(verbosity >= verbosity::DEBUG) {
+        if(verbosity >= VerbosityLevel::DEBUG) {
             printf("R0:%08X R1:%08X R2:%08X R3:%08X\n",
                 s.registers[0], s.registers[1], s.registers[2], s.registers[3]);
             printf("R4:%08X R5:%08X SP:%08X PC:%08X\n", 
@@ -517,7 +517,7 @@ int main(int argc, char **argv)
         }
     };
 
-    if(verbosity >= verbosity::INFO) {
+    if(verbosity >= VerbosityLevel::INFO) {
         printf("%llu instructions executed\n", instructions);
     }
 }
