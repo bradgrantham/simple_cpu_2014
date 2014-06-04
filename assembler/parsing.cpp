@@ -31,19 +31,40 @@ bool ExprIdent::eval(labels_map& labels, uint line, uint *value)
     return false;
 }
 
-bool InstructionDirect::Store(OutputFile& file)
+bool InstructionDirect::Store(labels_map& labels, OutputFile& file)
 {
     uint instruction = simple_cpu_2014::format27(opcode, 0);
     file.Store32(address, instruction);
     return true;
 }
 
-bool StoreInstructions(OutputFile& file, std::vector<Instruction::sptr>& instrs)
+bool StoreInstructions(labels_map& labels, OutputFile& file, std::vector<Instruction::sptr>& instrs)
 {
     for(auto it = instrs.begin(); it != instrs.end(); it++) {
-        bool result = (*it)->Store(file); 
+        bool result = (*it)->Store(labels, file); 
         if(!result)
             return false;
+    }
+    return true;
+}
+
+bool StoreMemoryDirectives(labels_map& labels, OutputFile& file, std::vector<Store>& stores)
+{
+    for(auto it = stores.begin(); it != stores.end(); it++) {
+        Store& store = *it;
+        unsigned int address = store.address;
+        for(auto m = store.exprs.begin(); m != store.exprs.end(); m++) {
+            unsigned int u;
+            bool success = (*m)->eval(labels, store.linenum, &u);
+            // XXX check size of item
+            if(store.size == 1)
+                file.Store8(address, u);
+            else if(store.size == 2)
+                file.Store16(address, u);
+            else if(store.size == 4)
+                file.Store32(address, u);
+            address += store.size;
+        }
     }
     return true;
 }

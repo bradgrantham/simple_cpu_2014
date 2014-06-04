@@ -48,7 +48,7 @@ private:
     bool visited;
 };
 
-typedef std::vector<ExprBase*> ExprList;
+typedef std::vector<ExprBase::sptr> ExprList;
 
 // labels_map labels;
 //
@@ -69,6 +69,14 @@ struct OutputFile
     {
         printf("%08X: %08X\n", address, v);
     }
+    void Store16(uint address, uint v)
+    {
+        printf("%08X: %04X\n", address, v);
+    }
+    void Store8(uint address, uint v)
+    {
+        printf("%08X: %02X\n", address, v);
+    }
 };
 
 struct Instruction
@@ -77,7 +85,7 @@ struct Instruction
     uint address;
     uint line;
     uint opcode;
-    virtual bool Store(OutputFile& file) = 0;
+    virtual bool Store(labels_map& labels, OutputFile& file) = 0;
     Instruction(uint address_, uint line_, uint opcode_) :
         address(address_),
         line(line_),
@@ -92,10 +100,25 @@ struct InstructionDirect : public Instruction
     InstructionDirect(uint address_, uint line_, uint opcode_) :
         Instruction(address_, line_, opcode_)
         {}
-    virtual bool Store(OutputFile& file);
+    virtual bool Store(labels_map& labels, OutputFile& file);
     virtual ~InstructionDirect() {}
 };
 
+struct Store
+{
+    uint linenum;
+    uint address;
+    int size;
+    ExprList exprs;
+    Store(uint linenum_, uint address_, int size_, const ExprList& exprs_) :
+        linenum(linenum_),
+        address(address_),
+        size(size_),
+        exprs(exprs_)
+    {
+    }
+};
 
-bool StoreInstructions(OutputFile& file, std::vector<Instruction::sptr>& instrs);
+bool StoreInstructions(labels_map& labels, OutputFile& file, std::vector<Instruction::sptr>& instrs);
+bool StoreMemoryDirectives(labels_map& labels, OutputFile& file, std::vector<Store>& stores);
 

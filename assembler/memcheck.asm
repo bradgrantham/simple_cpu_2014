@@ -53,5 +53,7 @@ exBadAccess: // Bad access 0x320
 l255:   .byte 0xff, 0x00, 0x00
 s1:     .short 0x1234
 w1:     .word  0x12345678
+w2:     .word  l255
+w1:     .word  w1
 hello:  .string "hello world"
 

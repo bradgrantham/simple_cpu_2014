@@ -9,20 +9,26 @@
 
 #define YYERROR_VERBOSE
 
+#ifdef DEBUG
+bool debug = true;
+#else
+bool debug = false;
+#endif
 extern int curLine;
 labels_map labels;
 OutputFile file;
 std::vector<Instruction::sptr> instructions;
+std::vector<Store> stores;
 int yylex();
 void yyerror(const char *s);
 
 typedef unsigned int uint;
 
 namespace shift_type {
-    const uint LA = 0x00;
+    const uint RL = 0x00;
     const uint RA = 0x01;
     const uint LL = 0x02;
-    const uint RL = 0x03;
+    const uint LA = 0x03;
 };
 
 namespace opcode {
@@ -64,8 +70,30 @@ namespace opcode {
     const uint HALT = 0x1f;
 };
 
-unsigned int curAddress = 0;
-std::vector<std::string> labels_at_next_address;
+uint curAddress = 0;
+std::vector<std::pair<uint, std::string> > labels_at_next_address;
+
+void PadAddressAndAssignLabels(uint linenumber, uint& address, uint pad)
+{
+    address = (address + pad - 1) & (~(pad - 1));
+    for(auto it = labels_at_next_address.begin(); it != labels_at_next_address.end(); it++) {
+        if(labels.find(it->second) != labels.end()) {
+            fprintf(stderr, "warning: label \"%s\" redefined at line %d\n", it->second.c_str(), it->first);
+        }
+        labels[it->second] = LineNumberExpr(ExprInt::sptr(new ExprInt(address)), it->first);
+        if(debug) printf("label %s at line %d set to %08X by statement at line %d, \n", it->second.c_str(), it->first, address, linenumber);
+    }
+    labels_at_next_address.clear();
+}
+
+/* set expression list to store */
+void SaveExpressions(uint line, uint& address, int size, ExprList* list)
+{
+    boost::shared_ptr<ExprList> exprs(list);
+    stores.push_back(Store(line, address, size, *list));
+    address += size * list->size();
+}
+
 
 %}
 
@@ -104,40 +132,39 @@ std::vector<std::string> labels_at_next_address;
 %%
 
 file :
-          lines { StoreInstructions(file, instructions); }
+          lines { StoreMemoryDirectives(labels, file, stores); StoreInstructions(labels, file, instructions); }
         ;
-/* recursively evaluate expressions */
 /* store memory directives, checking sizes, incrementing by address size */
 /* go through instructions, evaluate data parameters, check size of data, store */
 
 lines :
-          line 
+          line
         | lines line
         ;
 
 line :
-          instruction_line
-        | directive_line
-        | label_only_line
-        | empty_line
+          instruction_line { curLine++; }
+        | directive_line { curLine++; }
+        | label_only_line { curLine++; }
+        | empty_line { curLine++; }
         ;
 
 instruction_line :
-          label instruction NEWLINE { if(0)printf("label instr\n"); }
-        | instruction NEWLINE { if(0)printf("instr alone\n"); }
+          label instruction NEWLINE { }
+        | instruction NEWLINE { }
         ;
 
 directive_line :
-          label directive NEWLINE { if(0)printf("label: dir\n"); }
-        | directive NEWLINE { if(0)printf("dir alone\n"); }
+          label directive NEWLINE { }
+        | directive NEWLINE { }
         ;
 
 label_only_line :
-          label NEWLINE { if(0)printf("label only\n"); }
+          label NEWLINE { }
         ;
 
 label :
-          LABEL { labels_at_next_address.push_back(*$1); delete $1; }
+          LABEL { labels_at_next_address.push_back(std::pair<uint, std::string>(curAddress, *$1)); delete $1; }
         ;
 
 empty_line :
@@ -171,29 +198,28 @@ define_directive :
 /* store an identifier with value number */
 
 expression_list :
-          expression { $$ = new ExprList; $$->push_back($1); }
-        | expression_list COMMA expression { $$ = $1; $$->push_back($3); }
+          expression { $$ = new ExprList; ExprBase::sptr e($1); $$->push_back(e); }
+        | expression_list COMMA expression { $$ = $1; ExprBase::sptr e($3); $$->push_back(e); }
         ;
 mem_directive :
-          size_modifier expression_list { if(0)printf("mem\n"); }
+          size_modifier expression_list { PadAddressAndAssignLabels(curLine, curAddress, $1); SaveExpressions(curLine, curAddress, $1, $2); }
         ;
-/* maybe pad address to size; set any labels; set expression list to store */
 
 string_directive :
-          DOT_STRING STRINGLITERAL { if(0)printf("string\n"); }
+          DOT_STRING STRINGLITERAL { PadAddressAndAssignLabels(curLine, curAddress, 1); printf("XXX string literal unhandled\n"); }
         ;
 /* set any labels ; store string, incrementing address by size of string */
 
 
 instruction_direct : 
-          mnemonic_direct { Instruction::sptr ins(new InstructionDirect(curAddress, curLine, $1)); instructions.push_back(ins); }
+          mnemonic_direct { PadAddressAndAssignLabels(curLine, curAddress, 4); Instruction::sptr ins(new InstructionDirect(curAddress, curLine, $1)); instructions.push_back(ins); curAddress += 4; }
         ;
 mnemonic_direct : 
           HLT { $$ = opcode::HALT; }
         ;
 
 instruction_rx :
-          mnemonic_rx REGISTER { printf("rx instruction %d on register %d\n", $1, $2); }
+          mnemonic_rx REGISTER { PadAddressAndAssignLabels(curLine, curAddress, 4); printf("rx instruction %d on register %d\n", $1, $2); }
         ;
 mnemonic_rx :
           SWAPCC { $$ = opcode::SWAPCC; }
@@ -202,7 +228,7 @@ mnemonic_rx :
         | POP { $$ = opcode::POP; }
         ;
 
-instruction_imm : mnemonic_imm expression { if(0)printf("imm\n"); }
+instruction_imm : mnemonic_imm expression { PadAddressAndAssignLabels(curLine, curAddress, 4); if(0)printf("imm\n"); }
         ;
 mnemonic_imm :
           JL { $$ = opcode::JL; }
@@ -212,7 +238,7 @@ mnemonic_imm :
         ;
 
 instruction_rxry :
-          mnemonic_rxry REGISTER COMMA REGISTER { if(0)printf("rxry\n"); }
+          mnemonic_rxry REGISTER COMMA REGISTER { PadAddressAndAssignLabels(curLine, curAddress, 4); if(0)printf("rxry\n"); }
         ;
 mnemonic_rxry :
           AND { $$ = opcode::AND; }
@@ -230,7 +256,7 @@ mnemonic_rxry :
         ;
 
 instruction_rximm :
-          mnemonic_rximm REGISTER COMMA expression { if(0)printf("rximm\n"); }
+          mnemonic_rximm REGISTER COMMA expression { PadAddressAndAssignLabels(curLine, curAddress, 4); if(0)printf("rximm\n"); }
         ;
 mnemonic_rximm :
           MOVIU { $$ = opcode::MOVIU; }
@@ -242,7 +268,7 @@ mnemonic_rximm :
         ;
 
 instruction_rximm_varied :
-          mnemonic_rximm_varied shift_type REGISTER COMMA expression { if(0)printf("instruction_rximm_varied\n"); }
+          mnemonic_rximm_varied shift_type REGISTER COMMA expression { PadAddressAndAssignLabels(curLine, curAddress, 4); if(0)printf("instruction_rximm_varied\n"); }
         ;
 mnemonic_rximm_varied :
           SHIFT { $$ = opcode::SHIFT; }
@@ -255,7 +281,7 @@ shift_type :
         ;
 
 instruction_rxryimm_sized :
-          mnemonic_rxryimm_sized size_modifier REGISTER COMMA REGISTER { if(0)printf("instruction_rxryimm_size\n"); }
+          mnemonic_rxryimm_sized size_modifier REGISTER COMMA REGISTER { PadAddressAndAssignLabels(curLine, curAddress, 4); if(0)printf("instruction_rxryimm_size\n"); }
         ;
 mnemonic_rxryimm_sized :
           LOAD { $$ = opcode::LOAD; }
