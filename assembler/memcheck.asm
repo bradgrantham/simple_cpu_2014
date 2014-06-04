@@ -21,7 +21,7 @@ loop:   store.short r0, r1
         jl loop
 
 test:   // some simple instruction tests
-moviu r3, 0x1234
+        moviu r3, 0x1234
         addi r3, 0x5678 // r3 = 0x12345678
         push r3
         pop r4            // r4 = 0x12345678

@@ -1,4 +1,5 @@
-CXXFLAGS=-I/opt/local/include/ -Wall -g --std=c++11 
+OPT     = -O3 -DNDEBUG
+CXXFLAGS=-I/opt/local/include/ -Wall $(OPT) --std=c++11 
 
 asm: lex.yy.o asm_yacc.tab.o parsing.o
 	$(CXX) $(CXXFLAGS) -o $@ -ll $^

@@ -1,3 +1,4 @@
+#include <iostream>
 #include "parsing.h"
 
 bool ExprInt::eval(labels_map& labels, uint line, uint *value)
@@ -34,6 +35,13 @@ bool ExprIdent::eval(labels_map& labels, uint line, uint *value)
 bool InstructionDirect::Store(labels_map& labels, OutputFile& file)
 {
     uint instruction = simple_cpu_2014::format27(opcode, 0);
+    file.Store32(address, instruction);
+    return true;
+}
+
+bool InstructionRX::Store(labels_map& labels, OutputFile& file)
+{
+    uint instruction = simple_cpu_2014::format24(opcode, rx, 0);
     file.Store32(address, instruction);
     return true;
 }

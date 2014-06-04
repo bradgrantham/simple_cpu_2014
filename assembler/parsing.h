@@ -104,6 +104,18 @@ struct InstructionDirect : public Instruction
     virtual ~InstructionDirect() {}
 };
 
+struct InstructionRX : public Instruction
+{
+    uint rx;
+    typedef boost::shared_ptr<InstructionRX> sptr;
+    InstructionRX(uint address_, uint line_, uint opcode_, uint rx_) :
+        Instruction(address_, line_, opcode_),
+        rx(rx_)
+        {}
+    virtual bool Store(labels_map& labels, OutputFile& file);
+    virtual ~InstructionRX() {}
+};
+
 struct Store
 {
     uint linenum;
