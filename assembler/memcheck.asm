@@ -8,7 +8,7 @@
 reset:  moviu r0, 0x0000
         moviu r1, 0x0000
         moviu r3, 0x0100
-        shift.al r3, 1
+        shift.la r3, 1
         addi sp, 0x80           // stack pointer starts at 0x80
 
 loop:   store.short r0, r1

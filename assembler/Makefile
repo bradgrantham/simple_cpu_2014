@@ -1,6 +1,6 @@
-CXXFLAGS=-Wall -g
+CXXFLAGS=-I/opt/local/include/ -Wall -g --std=c++11 
 
-asm: lex.yy.o asm_yacc.tab.o
+asm: lex.yy.o asm_yacc.tab.o parsing.o
 	$(CXX) $(CXXFLAGS) -o $@ -ll $^
 
 lex.yy.cpp: asm_lex.ll asm_yacc.tab.h

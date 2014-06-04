@@ -2,7 +2,10 @@
 
 #include <string>
 
+#include "parsing.h"
 #include "asm_yacc.tab.hpp"
+
+#pragma clang diagnostic ignored "-Wdeprecated-register"
 
 #define YY_NO_UNPUT
 
@@ -104,10 +107,10 @@ store		        return(STORE);
 [sS][pP]                { yylval.i = 6; return(REGISTER); }
 [pP][cC]                { yylval.i = 7; return(REGISTER); }
 
-{DOT}lr                 return(DOT_LR);
+{DOT}rl                 return(DOT_RL);
 {DOT}ll                 return(DOT_LL);
-{DOT}ar                 return(DOT_AR);
-{DOT}al                 return(DOT_AL);
+{DOT}ra                 return(DOT_RA);
+{DOT}la                 return(DOT_LA);
 
 {DOT}org                return(DOT_ORG);
 {DOT}byte               return(DOT_BYTE);
