@@ -107,7 +107,7 @@ namespace opcode {
     const uint JMP = 0x1a;
 
     const uint SYS = 0x1b;
-    const uint UNUSED_1c = 0x1c;
+    const uint SWAPCC = 0x1c;
     const uint UNUSED_1d = 0x1d;
     const uint UNUSED_1e = 0x1e;
     const uint HALT = 0x1f;
