@@ -137,7 +137,6 @@ file :
               {
                   StoreMemoryDirectives(labels, file, stores);
                   StoreInstructions(labels, file, instructions);
-                  file.Finish();
               }
         ;
 /* store memory directives, checking sizes, incrementing by address size */
@@ -409,6 +408,7 @@ int main( int argc, char **argv )
     while(!feof(yyin)) {
         yyparse();
     }
+    file.Finish(stdout);
 }
 
 void yyerror(const char *s)
