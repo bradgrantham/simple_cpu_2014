@@ -90,7 +90,7 @@ void PadAddressAndAssignLabels(uint linenumber, uint& address, uint pad)
 /* set expression list to store */
 void SaveExpressions(uint linenum, uint& address, int size, ExprList* list)
 {
-    boost::shared_ptr<ExprList> exprs(list);
+    std::shared_ptr<ExprList> exprs(list);
     stores.push_back(Store(linenum, address, size, *list));
     address += size * list->size();
 }

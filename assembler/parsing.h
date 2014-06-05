@@ -2,9 +2,7 @@
 #include <vector>
 #include <string>
 #include <cstring>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
+#include <memory>
 
 #include "simple_cpu_2014.hpp"
 
@@ -12,21 +10,21 @@ typedef unsigned int uint;
 
 struct ExprBase;
 
-typedef std::pair<boost::shared_ptr<ExprBase>, uint> LineNumberExpr;
+typedef std::pair<std::shared_ptr<ExprBase>, uint> LineNumberExpr;
 typedef std::map<std::string, LineNumberExpr> labels_map;
 
 bool ResolveExpression(const std::string& str, uint linenum, labels_map& labels, uint *value);
 
 struct ExprBase
 {
-    typedef boost::shared_ptr<ExprBase> sptr;
+    typedef std::shared_ptr<ExprBase> sptr;
     virtual bool eval(labels_map& labels, uint linenum, uint *value) = 0;
     virtual ~ExprBase() {}
 };
 
 struct ExprInt : public ExprBase
 {
-    typedef boost::shared_ptr<ExprInt> sptr;
+    typedef std::shared_ptr<ExprInt> sptr;
     uint u;
     virtual bool eval(labels_map& labels, uint linenum, uint *value);
     ExprInt(uint u_) :
@@ -37,7 +35,7 @@ struct ExprInt : public ExprBase
 
 struct ExprIdent : public ExprBase
 {
-    typedef boost::shared_ptr<ExprIdent> sptr;
+    typedef std::shared_ptr<ExprIdent> sptr;
     std::string s;
     virtual bool eval(labels_map& labels, uint linenum, uint *value);
     ExprIdent(const std::string &s_) :
@@ -103,7 +101,7 @@ struct OutputFile
 
 struct Instruction
 {
-    typedef boost::shared_ptr<Instruction> sptr;
+    typedef std::shared_ptr<Instruction> sptr;
     uint address;
     uint linenum;
     uint opcode;
@@ -118,7 +116,7 @@ struct Instruction
 
 struct InstructionDirect : public Instruction
 {
-    typedef boost::shared_ptr<InstructionDirect> sptr;
+    typedef std::shared_ptr<InstructionDirect> sptr;
     InstructionDirect(uint address_, uint linenum_, uint opcode_) :
         Instruction(address_, linenum_, opcode_)
         {}
@@ -129,7 +127,7 @@ struct InstructionDirect : public Instruction
 struct InstructionRX : public Instruction
 {
     uint rx;
-    typedef boost::shared_ptr<InstructionRX> sptr;
+    typedef std::shared_ptr<InstructionRX> sptr;
     InstructionRX(uint address_, uint linenum_, uint opcode_, uint rx_) :
         Instruction(address_, linenum_, opcode_),
         rx(rx_)
@@ -142,7 +140,7 @@ struct InstructionRXRY : public Instruction
 {
     uint rx;
     uint ry;
-    typedef boost::shared_ptr<InstructionRXRY> sptr;
+    typedef std::shared_ptr<InstructionRXRY> sptr;
     InstructionRXRY(uint address_, uint linenum_, uint opcode_, uint rx_, uint ry_) :
         Instruction(address_, linenum_, opcode_),
         rx(rx_),
@@ -155,7 +153,7 @@ struct InstructionRXRY : public Instruction
 struct InstructionImm : public Instruction
 {
     ExprBase::sptr imm;
-    typedef boost::shared_ptr<InstructionImm> sptr;
+    typedef std::shared_ptr<InstructionImm> sptr;
     InstructionImm(uint address_, uint linenum_, uint opcode_, const ExprBase::sptr& imm_) :
         Instruction(address_, linenum_, opcode_),
         imm(imm_)
@@ -169,7 +167,7 @@ struct InstructionRXImmModified : public Instruction
     uint modifier;
     uint rx;
     ExprBase::sptr imm;
-    typedef boost::shared_ptr<InstructionRXImmModified> sptr;
+    typedef std::shared_ptr<InstructionRXImmModified> sptr;
     InstructionRXImmModified(uint address_, uint linenum_, uint opcode_, uint modifier_, uint rx_, const ExprBase::sptr& imm_) :
         Instruction(address_, linenum_, opcode_),
         modifier(modifier_),
@@ -184,7 +182,7 @@ struct InstructionRXImm : public Instruction
 {
     uint rx;
     ExprBase::sptr imm;
-    typedef boost::shared_ptr<InstructionRXImm> sptr;
+    typedef std::shared_ptr<InstructionRXImm> sptr;
     InstructionRXImm(uint address_, uint linenum_, uint opcode_, uint rx_, const ExprBase::sptr& imm_) :
         Instruction(address_, linenum_, opcode_),
         rx(rx_),
@@ -200,7 +198,7 @@ struct InstructionRXRYImmModified : public Instruction
     uint rx;
     uint ry;
     ExprBase::sptr imm;
-    typedef boost::shared_ptr<InstructionRXRYImmModified> sptr;
+    typedef std::shared_ptr<InstructionRXRYImmModified> sptr;
     InstructionRXRYImmModified(uint address_, uint linenum_, uint opcode_, uint modifier_, uint rx_, uint ry_, const ExprBase::sptr& imm_) :
         Instruction(address_, linenum_, opcode_),
         modifier(modifier_),
