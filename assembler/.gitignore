@@ -1,0 +1,8 @@
+asm
+asm_yacc.output
+asm_yacc.tab.cpp
+asm_yacc.tab.hpp
+lex.yy
+lex.yy.cpp
+*.bin
+*.o
