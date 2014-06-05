@@ -49,3 +49,17 @@ exBadAccess: // Bad access 0x320
         moviu r0, 0xbada
         addi r0, 0xcce5
         hlt
+
+l255:   .byte 0xff, 0x00, 0x00
+s1:     .short 0x1234
+w1:     .word  0x12345678
+w2:     .word  l255
+w3:     .word  endoffile // test reference of label at end of file
+w1:     .word  w1       // test detection of redefinition
+
+        .define a b
+        .define b a
+w4:     .word  a        // test detection of circular expressions
+
+hello:  .string "hello world"
+endoffile:
