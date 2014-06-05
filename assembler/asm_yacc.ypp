@@ -155,10 +155,10 @@ lines :
         ;
 
 line :
-          instruction_line { curLine++; }
-        | directive_line { curLine++; }
-        | label_only_line { curLine++; }
-        | empty_line { curLine++; }
+          instruction_line
+        | directive_line
+        | label_only_line
+        | empty_line
         ;
 
 instruction_line :

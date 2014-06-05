@@ -50,6 +50,15 @@ exBadAccess: // Bad access 0x320
         addi r0, 0xcce5
         hlt
 
+        moviu r0, 0xffffffff // should be out of range
+
+        .define  large 0xf0000000
+        jmp large // should be out of range
+
+        .define  lsbs 0x00000001
+        jmp lsbs // should truncate
+
+
 l255:   .byte 0xff, 0x00, 0x00
 s1:     .short 0x1234
 w1:     .word  0x12345678

@@ -229,3 +229,15 @@ struct Store
 bool StoreInstructions(labels_map& labels, OutputFile& file, std::vector<Instruction::sptr>& instrs);
 bool StoreMemoryDirectives(labels_map& labels, OutputFile& file, std::vector<Store>& stores);
 
+struct ImmediateOperandInfo
+{
+    uint shift;
+    bool signd;
+    uint size;
+    bool relative;
+
+    uint Encode(uint v, int line, uint address);
+};
+
+extern ImmediateOperandInfo instr_infos[];
+
