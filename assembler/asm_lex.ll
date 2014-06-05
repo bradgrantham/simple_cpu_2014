@@ -1,6 +1,7 @@
 %{
 
 #include <string>
+#include <cstdarg>
 
 #include "parsing.h"
 #include "asm_yacc.tab.hpp"
