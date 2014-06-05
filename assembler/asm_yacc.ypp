@@ -135,6 +135,13 @@ void SaveExpressions(uint linenum, uint& address, int size, ExprList* list)
 file :
           lines
               {
+                  /* 4 is arbitrary here */
+                  /* it means binary files concatenated can require */
+                  /* 4-byte alignment and will be okay */
+                  while(curAddress % 4 != 0) {
+                      file.Store8(curAddress++, 0);
+                  }
+                  PadAddressAndAssignLabels(curLine, curAddress, 4);
                   StoreMemoryDirectives(labels, file, stores);
                   StoreInstructions(labels, file, instructions);
               }
