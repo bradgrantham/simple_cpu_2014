@@ -87,6 +87,20 @@ void PadAddressAndAssignLabels(uint linenumber, uint& address, uint pad)
     labels_at_next_address.clear();
 }
 
+ExprBase* DotHi(const ExprBase::sptr& e)
+{
+    ExprInt::sptr neg16(new ExprInt(-16));
+    ExprInt::sptr lower16(new ExprInt(0xffff));
+    ExprShift::sptr shift(new ExprShift(e, neg16));
+    return new ExprBitwiseAnd(shift, lower16);
+}
+
+ExprBase *DotLo(const ExprBase::sptr& e)
+{
+    ExprInt::sptr lower16(new ExprInt(0xffff));
+    return new ExprBitwiseAnd(e, lower16);
+}
+
 /* set expression list to store */
 void SaveExpressions(uint linenum, uint& address, int size, ExprList* list)
 {
@@ -107,6 +121,7 @@ void SaveExpressions(uint linenum, uint& address, int size, ExprList* list)
 
 %token COMMA
 %token <i> HLT SWAPCC RSR PUSH POP JL JMP JNE SYS AND OR XOR NOT ADD ADC SUB MULT DIV CMP XCHG MOV MOVIU ADDIU ADDI CMPIU SHIFT JR JSR LOAD STORE
+%token ASSIGN
 %token DOT_ORG DOT_DEFINE DOT_BYTE DOT_SHORT DOT_WORD DOT_STRING
 %token DOT_RL DOT_RA DOT_LL DOT_LA
 %token DOT_LO DOT_HI
@@ -165,17 +180,17 @@ line :
         ;
 
 instruction_line :
-          label instruction NEWLINE { }
-        | instruction NEWLINE { }
+          label instruction NEWLINE
+        | instruction NEWLINE
         ;
 
 directive_line :
-          label directive NEWLINE { }
-        | directive NEWLINE { }
+          label directive NEWLINE
+        | directive NEWLINE
         ;
 
 label_only_line :
-          label NEWLINE { }
+          label NEWLINE
         ;
 
 label :
@@ -191,21 +206,22 @@ empty_line :
         ;
 
 directive :
-          org_directive { }
-        | mem_directive { }
-        | string_directive { }
-        | define_directive { }
+          org_directive
+        | mem_directive
+        | string_directive
+        | define_directive
         ;
 
 instruction :
-          instruction_direct { }
-        | instruction_imm { }
-        | instruction_rx { }
-        | instruction_rximm { }
-        | instruction_rx0imm { }
-        | instruction_rximm_varied { }
-        | instruction_rxry { }
-        | instruction_rxryimm_sized { }
+          instruction_direct
+        | instruction_imm
+        | instruction_rx
+        | instruction_rximm
+        | instruction_rx0imm
+        | instruction_rximm_varied
+        | instruction_rxry
+        | instruction_rxryimm_sized
+        | assign_pseudoop
         ;
 
 org_directive :
@@ -361,6 +377,22 @@ mnemonic_rximm :
         | JSR { $$ = opcode::JSR; }
         ;
 
+assign_pseudoop :
+          ASSIGN REGISTER COMMA expression
+              {
+                  PadAddressAndAssignLabels(curLine, curAddress, 4);
+                  ExprBase::sptr e($4);
+                  ExprBase::sptr hi(DotHi(e));
+                  ExprBase::sptr lo(DotLo(e));
+                  Instruction::sptr mov(new InstructionRXImm(curAddress, curLine, opcode::MOVIU, $2, hi));
+                  instructions.push_back(mov);
+                  curAddress += 4;
+                  Instruction::sptr add(new InstructionRXImm(curAddress, curLine, opcode::ADDIU, $2, lo));
+                  instructions.push_back(add);
+                  curAddress += 4;
+              }
+        ;
+
 instruction_rximm_varied :
           mnemonic_rximm_varied shift_type REGISTER COMMA expression
               {
@@ -424,19 +456,15 @@ expression :
               {
                   ExprIdent::sptr ident(new ExprIdent(*$1));
                   delete $1;
-                  ExprInt::sptr neg16(new ExprInt(-16));
-                  ExprInt::sptr lower16(new ExprInt(0xffff));
                   ExprBase::sptr e(ident);
-                  ExprShift::sptr shift(new ExprShift(e, neg16));
-                  $$ = new ExprBitwiseAnd(shift, lower16);
+                  $$ = DotHi(e);
               }
         | IDENTIFIER DOT_LO
               {
                   ExprIdent::sptr ident(new ExprIdent(*$1));
                   delete $1;
-                  ExprInt::sptr lower16(new ExprInt(0xffff));
                   ExprBase::sptr e(ident);
-                  $$ = new ExprBitwiseAnd(e, lower16);
+                  $$ = DotLo(e);
               }
         ;
 

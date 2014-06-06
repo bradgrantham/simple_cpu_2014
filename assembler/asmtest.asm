@@ -58,6 +58,12 @@ exBadAccess: // Bad access 0x320
         .define  lsbs 0x00000001
         jmp lsbs // should truncate
 
+        .define cafebabe 0xCAFEBABE
+        moviu r1, cafebabe.hi
+        addiu r1, cafebabe.lo
+
+        .define deadbeef 0xDEADBEEF
+        assign r0, deadbeef
 
 l255:   .byte 0xff, 0x00, 0x00
 s1:     .short 0x1234

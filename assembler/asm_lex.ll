@@ -103,6 +103,8 @@ shift		        return SHIFT;
 load		        return LOAD;
 store		        return STORE;
 
+assign		        return ASSIGN;
+
 [Rr]{DIGIT}*            { yylval.i = yytext[1] - '0'; return REGISTER; }
 [fF][pP]                { yylval.i = 5; return REGISTER; }
 [sS][pP]                { yylval.i = 6; return REGISTER; }
