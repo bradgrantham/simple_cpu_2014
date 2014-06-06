@@ -64,7 +64,7 @@ typedef std::vector<ExprBase::sptr> ExprList;
 
 struct OutputFile
 {
-    unsigned char buffer[4096];
+    unsigned char buffer[32 * 1024 * 1024];
     uint max;
     OutputFile() :
         max(0)
@@ -73,21 +73,18 @@ struct OutputFile
     }
     void Store32(uint address, uint v)
     {
-        // printf("%08X: %08X\n", address, v);
         for(int i = 0; i < 4; i++)
             buffer[address + i] = (v >> i * 8) & 0xff;
         max = std::max(max, address + 4);
     }
     void Store16(uint address, uint v)
     {
-        // printf("%08X: %04X\n", address, v);
         for(int i = 0; i < 2; i++)
             buffer[address + i] = (v >> i * 8) & 0xff;
         max = std::max(max, address + 2);
     }
     void Store8(uint address, uint v)
     {
-        // printf("%08X: %02X\n", address, v);
         for(int i = 0; i < 1; i++)
             buffer[address + i] = (v >> i * 8) & 0xff;
         max = std::max(max, address + 0);
