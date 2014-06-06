@@ -213,16 +213,16 @@ bool StoreMemoryDirectives(labels_map& labels, OutputFile& file, std::vector<Sto
 
 void OutputFile::FinishMIF(FILE *fp)
 {
+    uint words = (max + 3) / 4;
     fprintf(fp, "-- Written from asm, Assembler for Jim's Simple CPU 2014\n");
-    fprintf(fp, "DEPTH = 32;\n");
-    fprintf(fp, "WIDTH = 8;\n");
+    fprintf(fp, "DEPTH = %d;\n", words);
+    fprintf(fp, "WIDTH = 32;\n");
     fprintf(fp, "ADDRESS_RADIX = HEX;\n");
     fprintf(fp, "DATA_RADIX = HEX;\n");
     fprintf(fp, "CONTENT\n");
     fprintf(fp, "BEGIN\n");
-    uint words = (max + 3) / 4;
-    for(uint i = 0; i < words * 4; i++)
-        fprintf(fp, "%02X : %02X;\n", i, buffer[i]);
+    for(uint i = 0; i < words; i++)
+        fprintf(fp, "%04X : %08X;\n", i, *(uint*)(buffer + i*4));
     fprintf(fp, "END\n");
 }
 
