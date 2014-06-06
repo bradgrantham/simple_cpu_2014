@@ -62,7 +62,6 @@ namespace opcode {
     const uint JNE = 0x16;
     const uint JR = 0x17;
     const uint JSR = 0x18;
-    const uint RSR = 0x19;
     const uint JMP = 0x1a;
 
     const uint SYS = 0x1b;
@@ -111,6 +110,7 @@ void SaveExpressions(uint linenum, uint& address, int size, ExprList* list)
 %token DOT_ORG DOT_DEFINE DOT_BYTE DOT_SHORT DOT_WORD DOT_STRING
 %token DOT_RL DOT_RA DOT_LL DOT_LA
 %token NEWLINE
+%token TILDE MINUS PLUS MULT DIVIDE OPAREN CPAREN CARET AMPERSAND VERTICALBAR 
 
 %token <str> IDENTIFIER
 %token <str> LABEL
@@ -128,6 +128,7 @@ void SaveExpressions(uint linenum, uint& address, int size, ExprList* list)
 %type <i> mnemonic_imm
 %type <i> mnemonic_rxry
 %type <i> mnemonic_rximm
+%type <i> mnemonic_rx0imm
 %type <i> mnemonic_rximm_varied
 %type <i> mnemonic_rxryimm_sized
 
@@ -200,6 +201,7 @@ instruction :
         | instruction_imm { }
         | instruction_rx { }
         | instruction_rximm { }
+        | instruction_rx0imm { }
         | instruction_rximm_varied { }
         | instruction_rxry { }
         | instruction_rxryimm_sized { }
@@ -280,7 +282,6 @@ instruction_rx :
         ;
 mnemonic_rx :
           SWAPCC { $$ = opcode::SWAPCC; }
-        | RSR { $$ = opcode::RSR; }
         | PUSH { $$ = opcode::PUSH; }
         | POP { $$ = opcode::POP; }
         ;
@@ -324,6 +325,20 @@ mnemonic_rxry :
         | CMP { $$ = opcode::CMP; }
         | XCHG { $$ = opcode::XCHG; }
         | MOV { $$ = opcode::MOV; }
+        ;
+
+instruction_rx0imm :
+          mnemonic_rx0imm REGISTER
+              {
+                  PadAddressAndAssignLabels(curLine, curAddress, 4);
+                  ExprBase::sptr e(new ExprInt(0));
+                  Instruction::sptr ins(new InstructionRXImm(curAddress, curLine, $1, $2, e));
+                  instructions.push_back(ins);
+                  curAddress += 4;
+              }
+        ;
+mnemonic_rx0imm :
+          RSR { $$ = opcode::JR; }
         ;
 
 instruction_rximm :
