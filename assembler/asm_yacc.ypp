@@ -109,6 +109,7 @@ void SaveExpressions(uint linenum, uint& address, int size, ExprList* list)
 %token <i> HLT SWAPCC RSR PUSH POP JL JMP JNE SYS AND OR XOR NOT ADD ADC SUB MULT DIV CMP XCHG MOV MOVIU ADDIU ADDI CMPIU SHIFT JR JSR LOAD STORE
 %token DOT_ORG DOT_DEFINE DOT_BYTE DOT_SHORT DOT_WORD DOT_STRING
 %token DOT_RL DOT_RA DOT_LL DOT_LA
+%token DOT_LO DOT_HI
 %token NEWLINE
 %token TILDE MINUS PLUS MULTIPLY DIVIDE OPAREN CPAREN CARET AMPERSAND VERTICALBAR 
 
@@ -418,6 +419,24 @@ expression :
               {
                   $$ = new ExprIdent(*$1);
                   delete $1;
+              }
+        | IDENTIFIER DOT_HI
+              {
+                  ExprIdent::sptr ident(new ExprIdent(*$1));
+                  delete $1;
+                  ExprInt::sptr neg16(new ExprInt(-16));
+                  ExprInt::sptr lower16(new ExprInt(0xffff));
+                  ExprBase::sptr e(ident);
+                  ExprShift::sptr shift(new ExprShift(e, neg16));
+                  $$ = new ExprBitwiseAnd(shift, lower16);
+              }
+        | IDENTIFIER DOT_LO
+              {
+                  ExprIdent::sptr ident(new ExprIdent(*$1));
+                  delete $1;
+                  ExprInt::sptr lower16(new ExprInt(0xffff));
+                  ExprBase::sptr e(ident);
+                  $$ = new ExprBitwiseAnd(e, lower16);
               }
         ;
 

@@ -47,6 +47,32 @@ private:
     bool visited;
 };
 
+struct ExprBitwiseAnd : public ExprBase
+{
+    typedef std::shared_ptr<ExprBitwiseAnd> sptr;
+    ExprBase::sptr left;
+    ExprBase::sptr right;
+    virtual bool eval(labels_map& labels, uint linenum, uint *value);
+    ExprBitwiseAnd(const ExprBase::sptr& l_, const ExprBase::sptr& r_) :
+        left(l_),
+        right(r_)
+        {}
+    virtual ~ExprBitwiseAnd() {}
+};
+
+struct ExprShift : public ExprBase
+{
+    typedef std::shared_ptr<ExprShift> sptr;
+    ExprBase::sptr operand;
+    ExprBase::sptr shift;
+    virtual bool eval(labels_map& labels, uint linenum, uint *value);
+    ExprShift(const ExprBase::sptr& operand_, const ExprBase::sptr& shift_) :
+        operand(operand_),
+        shift(shift_)
+        {}
+    virtual ~ExprShift() {}
+};
+
 typedef std::vector<ExprBase::sptr> ExprList;
 
 // labels_map labels;

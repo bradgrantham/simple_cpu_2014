@@ -54,13 +54,13 @@ ID		[a-zA-Z_][a-zA-Z_0-9]*
                                 return 0;
                             }
                         }
-[ \t]*{COMMA}[ \t]*     return(COMMA);
+[ \t]*{COMMA}[ \t]*     return COMMA;
 [ \t]*                  { }
 "/""/".*                { }
                 
 {DASH}?{DIGIT}+         {
                             yylval.i = atoi(yytext);
-                            return(INTEGER);
+                            return INTEGER;
                         }
 
 0[Xx]{HEXDIGIT}+        {
@@ -69,64 +69,67 @@ ID		[a-zA-Z_][a-zA-Z_0-9]*
                         }
 {QUOTE}{NOTQUOTE}*{QUOTE} {
                             yylval.str = new std::string(yytext + 1, yytext + strlen(yytext) - 1);
-                            return(STRINGLITERAL);
+                            return STRINGLITERAL;
                         }
 
-hlt		        return(HLT);
-swapcc		        return(SWAPCC);
-rsr		        return(RSR);
-push		        return(PUSH);
-pop		        return(POP);
-jl		        return(JL);
-jmp		        return(JMP);
-jne		        return(JNE);
-sys		        return(SYS);
-and		        return(AND);
-or		        return(OR);
-xor		        return(XOR);
-not		        return(NOT);
-add		        return(ADD);
-adc		        return(ADC);
-sub		        return(SUB);
-mult		        return(MULT);
-div		        return(DIV);
-cmp		        return(CMP);
-xchg		        return(XCHG);
-mov		        return(MOV);
-moviu		        return(MOVIU);
-addiu		        return(ADDIU);
-addi		        return(ADDI);
-cmpiu		        return(CMPIU);
-jr		        return(JR);
-jsr		        return(JSR);
-shift		        return(SHIFT);
-load		        return(LOAD);
-store		        return(STORE);
+hlt		        return HLT;
+swapcc		        return SWAPCC;
+rsr		        return RSR;
+push		        return PUSH;
+pop		        return POP;
+jl		        return JL;
+jmp		        return JMP;
+jne		        return JNE;
+sys		        return SYS;
+and		        return AND;
+or		        return OR;
+xor		        return XOR;
+not		        return NOT;
+add		        return ADD;
+adc		        return ADC;
+sub		        return SUB;
+mult		        return MULT;
+div		        return DIV;
+cmp		        return CMP;
+xchg		        return XCHG;
+mov		        return MOV;
+moviu		        return MOVIU;
+addiu		        return ADDIU;
+addi		        return ADDI;
+cmpiu		        return CMPIU;
+jr		        return JR;
+jsr		        return JSR;
+shift		        return SHIFT;
+load		        return LOAD;
+store		        return STORE;
 
-[Rr]{DIGIT}*            { yylval.i = yytext[1] - '0'; return(REGISTER); }
-[fF][pP]                { yylval.i = 5; return(REGISTER); }
-[sS][pP]                { yylval.i = 6; return(REGISTER); }
-[pP][cC]                { yylval.i = 7; return(REGISTER); }
+[Rr]{DIGIT}*            { yylval.i = yytext[1] - '0'; return REGISTER; }
+[fF][pP]                { yylval.i = 5; return REGISTER; }
+[sS][pP]                { yylval.i = 6; return REGISTER; }
+[pP][cC]                { yylval.i = 7; return REGISTER; }
 
-{DOT}rl                 return(DOT_RL);
-{DOT}ll                 return(DOT_LL);
-{DOT}ra                 return(DOT_RA);
-{DOT}la                 return(DOT_LA);
+{DOT}rl                 return DOT_RL;
+{DOT}ll                 return DOT_LL;
+{DOT}ra                 return DOT_RA;
+{DOT}la                 return DOT_LA;
 
-{DOT}org                return(DOT_ORG);
-{DOT}byte               return(DOT_BYTE);
-{DOT}short              return(DOT_SHORT);
-{DOT}word               return(DOT_WORD);
-{DOT}string             return(DOT_STRING);
-{DOT}define             return(DOT_DEFINE);
+{DOT}lo                 return DOT_LO;
+{DOT}hi                 return DOT_HI;
+
+{DOT}org                return DOT_ORG;
+{DOT}byte               return DOT_BYTE;
+{DOT}short              return DOT_SHORT;
+{DOT}word               return DOT_WORD;
+{DOT}string             return DOT_STRING;
+{DOT}define             return DOT_DEFINE;
 
 {ID}                    {
                             yylval.str = new std::string(yytext);
-                            return(IDENTIFIER);
+                            return IDENTIFIER;
                         }
 {ID}{COLON}             {
                             yylval.str = new std::string(yytext, yytext + strlen(yytext) - 1);
-                            return(LABEL);
+                            return LABEL;
                         }
 .                       { yyerrorf("unexpected character: %02X, '%c'\n", yytext[0], yytext[0]); yyterminate(); }
 

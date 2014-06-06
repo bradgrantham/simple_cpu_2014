@@ -1,6 +1,27 @@
 #include <iostream>
 #include "parsing.h"
 
+bool ExprBitwiseAnd::eval(labels_map& labels, uint linenum, uint *value)
+{
+    uint l, r;
+    bool result1 = left->eval(labels, linenum, &l);
+    bool result2 = right->eval(labels, linenum, &r);
+    *value = l & r;
+    return result1 && result2;
+}
+
+bool ExprShift::eval(labels_map& labels, uint linenum, uint *value)
+{
+    uint o, s;
+    bool result1 = operand->eval(labels, linenum, &o);
+    bool result2 = shift->eval(labels, linenum, &s);
+    if(shift > 0)
+        *value = o >> s;
+    else
+        *value = o << s;
+    return result1 && result2;
+}
+
 bool ExprInt::eval(labels_map& labels, uint linenum, uint *value)
 {
     *value = u;
