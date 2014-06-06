@@ -92,11 +92,12 @@ struct OutputFile
             buffer[address + i] = (v >> i * 8) & 0xff;
         max = std::max(max, address + 0);
     }
-    void Finish(FILE *fp)
+    void FinishBIN(FILE *fp)
     {
         uint words = (max + 3) / 4;
         fwrite(buffer, 4, words, fp);
     }
+    void FinishMIF(FILE *fp);
 };
 
 struct Instruction

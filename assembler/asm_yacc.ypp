@@ -1,5 +1,6 @@
 %{
 
+#include <iostream>
 #include <vector>
 #include <map>
 #include <string>
@@ -409,13 +410,94 @@ expression :
 
 extern FILE *yyin;
 
+void usage(const char *progname)
+{
+    std::cerr << "usage: " << progname << " [-b BINoutputfile] [-m MIFoutputfile] inputfile" << std::endl;
+    std::cerr << "if no arguments are provided, this program will " << std::endl;
+    std::cerr << "write a BIN file to stdout" << std::endl;
+}
+
 int main( int argc, char **argv )
 {
-    yyin = stdin;
+    const char *progname = argv[0];
+    const char *BINfilename = NULL;
+    const char *MIFfilename = NULL;
+    argc--; argv++;
+
+    while(argc > 0 && argv[0][0] == '-') {
+        if(strcmp(argv[0], "-b") == 0) {
+            if(argc < 2) {
+                std::cerr << "-b requires a filename parameter" << std::endl;
+                usage(progname);
+                exit(EXIT_FAILURE);
+            }
+            BINfilename = argv[1];
+            argc -= 2; argv += 2;
+        } else if(strcmp(argv[0], "-m") == 0) {
+            if(argc < 2) {
+                std::cerr << "-m requires a filename parameter" << std::endl;
+                usage(progname);
+                exit(EXIT_FAILURE);
+            }
+            MIFfilename = argv[1];
+            argc -= 2; argv += 2;
+        }
+    }
+
+    if(argc < 1) {
+        std::cerr << "Expected input filename" << std::endl;
+        usage(progname);
+        exit(EXIT_FAILURE);
+    }
+
+    const char *inputfilename = argv[0];
+    FILE *input = fopen(inputfilename, "r");
+    if(input == NULL) {
+        std::cerr << "failed to open " << inputfilename << " for input " << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    yyin = input;
     while(!feof(yyin)) {
         yyparse();
     }
-    file.Finish(stdout);
+    fclose(input);
+
+
+    if(BINfilename == NULL && MIFfilename == NULL) {
+
+        file.FinishBIN(stdout);
+
+    } else {
+
+        if(BINfilename != NULL) {
+
+            FILE *BINoutput = fopen(BINfilename, "wb");
+
+            if(BINoutput == NULL) {
+                std::cerr << "failed to open " << BINfilename << " for output " << std::endl;
+                exit(EXIT_FAILURE);
+            }
+
+            file.FinishBIN(BINoutput);
+
+            fclose(BINoutput);
+        }
+
+        if(MIFfilename != NULL) {
+            FILE *MIFoutput = fopen(MIFfilename, "wb");
+
+            if(MIFoutput == NULL) {
+                std::cerr << "failed to open " << MIFfilename << " for output " << std::endl;
+                exit(EXIT_FAILURE);
+            }
+
+            file.FinishMIF(MIFoutput);
+
+            fclose(MIFoutput);
+        }
+    }
+
 }
 
 void yyerror(const char *s)

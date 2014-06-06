@@ -5,4 +5,5 @@ asm_yacc.tab.hpp
 lex.yy
 lex.yy.cpp
 *.bin
+*.mif
 *.o

@@ -210,3 +210,19 @@ bool StoreMemoryDirectives(labels_map& labels, OutputFile& file, std::vector<Sto
     }
     return success;
 }
+
+void OutputFile::FinishMIF(FILE *fp)
+{
+    fprintf(fp, "-- Written from asm, Assembler for Jim's Simple CPU 2014\n");
+    fprintf(fp, "DEPTH = 32;\n");
+    fprintf(fp, "WIDTH = 8;\n");
+    fprintf(fp, "ADDRESS_RADIX = HEX;\n");
+    fprintf(fp, "DATA_RADIX = HEX;\n");
+    fprintf(fp, "CONTENT\n");
+    fprintf(fp, "BEGIN\n");
+    uint words = (max + 3) / 4;
+    for(uint i = 0; i < words * 4; i++)
+        fprintf(fp, "%02X : %02X;\n", i, buffer[i]);
+    fprintf(fp, "END\n");
+}
+

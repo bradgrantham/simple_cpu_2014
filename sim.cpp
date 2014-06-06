@@ -150,7 +150,7 @@ extern opcode_info opcodes[];
 
 memory_changed moviu(state& s, const instruction& instr)
 {
-    s.registers[instr.dst] = instr.data;
+    s.registers[instr.dst] = instr.data << 16;
     s.registers[reg::PC] += 4;
     return memory_changed(false, 0);
 }
