@@ -3,7 +3,7 @@
 #include <boost/program_options.hpp>
 #include "simple_cpu_2014.hpp"
 
-const int memsize = 16 * 1024 * 1024;
+const int memsize = 32 * 1024 * 1024;
 const int registercount = 8;
 const int CONSOLE_OUTPUT = 0xf0000000;
 
@@ -19,6 +19,7 @@ struct state
 {
     int32_t registers[registercount];
     bool lt, eq, gt, halted;
+    bool separate_instructions;
     int carry;
 
     uint8_t memory[memsize];
@@ -115,6 +116,7 @@ struct state
     state() { reset(); }
     void reset()
     {
+        separate_instructions = false;
         for(int i = 0; i < registercount; i++)
             registers[i] = 0 ;
         carry = 0;
@@ -131,7 +133,7 @@ struct instruction
     uint opcode;
     uint dst;
     uint src;
-    uint size;
+    uint modifier;
     uint data;
     instruction(uint32_t value);
 };
@@ -171,10 +173,14 @@ memory_changed addiu(state& s, const instruction& instr)
 
 memory_changed shift(state& s, const instruction& instr)
 {
-    if(instr.data & 0x20)
+    if(instr.modifier == shifttype::RL)
         s.registers[instr.dst] >>= (instr.data & 0x1f);
-    else
+    else if(instr.modifier == shifttype::LL)
         s.registers[instr.dst] <<= (instr.data & 0x1f);
+    else if(instr.modifier == shifttype::RA)
+        s.registers[instr.dst] = s.registers[instr.dst] >> (instr.data & 0x1f);
+    else if(instr.modifier == shifttype::LA)
+        s.registers[instr.dst] = s.registers[instr.dst] << (instr.data & 0x1f);
 
     s.registers[reg::PC] += 4;
     return memory_changed(false, 0);
@@ -193,7 +199,7 @@ memory_changed cmpiu(state& s, const instruction& instr)
 memory_changed store(state& s, const instruction& instr)
 {
     uint32_t addr = s.registers[instr.dst] + sign_extend(instr.data, 18);
-    switch(instr.size) {
+    switch(instr.modifier) {
         case opsize::SIZE_8: s.store8(addr, s.registers[instr.src]); break;
         case opsize::SIZE_16: s.store16(addr, s.registers[instr.src]); break;
         case opsize::SIZE_32: s.store32(addr, s.registers[instr.src]); break;
@@ -208,7 +214,7 @@ memory_changed load(state& s, const instruction& instr)
 {
     uint32_t addr = s.registers[instr.src] + sign_extend(instr.data, 18);
     uint32_t data = 0xffffffff;
-    switch(instr.size) {
+    switch(instr.modifier) {
         case opsize::SIZE_8: data = s.fetch8(addr); break;
         case opsize::SIZE_16: data = s.fetch16(addr); break;
         case opsize::SIZE_32: data = s.fetch32(addr); break;
@@ -229,10 +235,10 @@ memory_changed mov(state& s, const instruction& instr)
 
 memory_changed push(state& s, const instruction& instr)
 {
-    s.registers[reg::SP] -= 4;
-    s.store32(s.registers[reg::SP], s.registers[instr.dst]); // dst is first reg
+    s.store32(s.registers[reg::SP - 4], s.registers[instr.dst]); // dst is first reg
     if(s.memory_fault)
         return memory_changed(false, 0);
+    s.registers[reg::SP] -= 4;
     s.registers[reg::PC] += 4;
     return memory_changed(true, s.registers[reg::SP]);
 }
@@ -280,6 +286,7 @@ memory_changed add(state& s, const instruction& instr)
 {
     s.registers[instr.dst] += s.registers[instr.src];
     s.registers[reg::PC] += 4;
+    // XXX carry
     return memory_changed(false, 0);
 }
 
@@ -360,12 +367,6 @@ memory_changed jsr(state& s, const instruction& instr)
     return memory_changed(false, 0);
 }
 
-memory_changed rsr(state& s, const instruction& instr)
-{
-    s.registers[reg::PC] = s.registers[instr.dst];
-    return memory_changed(false, 0);
-}
-
 memory_changed jmp(state& s, const instruction& instr)
 {
     s.registers[reg::PC] = sign_extend(instr.data, 27) << 2;
@@ -380,10 +381,10 @@ memory_changed jr(state& s, const instruction& instr)
 
 memory_changed sys(state& s, const instruction& instr)
 {
-    s.registers[reg::SP] -= 4;
-    s.store32(s.registers[reg::SP], s.registers[reg::PC]); // dst is first reg
+    s.store32(s.registers[reg::SP - 4], s.registers[reg::PC]); // dst is first reg
     if(s.memory_fault)
         return memory_changed(false, 0);
+    s.registers[reg::SP] -= 4;
     s.registers[reg::PC] = instr.data << 2;
     return memory_changed(true, s.registers[reg::SP]);
 }
@@ -394,11 +395,30 @@ memory_changed halt(state& s, const instruction& instr)
     return memory_changed(false, 0);
 }
 
+memory_changed swapcc(state& s, const instruction& instr)
+{
+    int32_t t = s.registers[instr.dst];
+
+    s.registers[instr.dst] =
+        ((s.carry ? 1 : 0) << 3) |
+        ((s.lt ? 1 : 0) << 2) |
+        ((s.gt ? 1 : 0) << 1) |
+        ((s.eq ? 1 : 0) << 0);
+
+    s.carry = (t & 0x8) ? 1 : 0;
+    s.lt = t & 0x4;
+    s.gt = t & 0x2;
+    s.eq = t & 0x1;
+
+    s.registers[reg::PC] += 4;
+    return memory_changed(false, 0);
+}
+
 opcode_info opcodes[] =
 {
     [opcode::MOVIU] = {24, "moviu", moviu},
     [opcode::ADDI] = {24, "addi", addi},
-    [opcode::SHIFT] = {24, "shift", shift},
+    [opcode::SHIFT] = {18, "shift", shift},
     [opcode::CMPIU] = {24, "cmpiu", cmpiu},
     [opcode::ADDIU] = {24, "addiu", addiu},
 
@@ -425,7 +445,7 @@ opcode_info opcodes[] =
     [opcode::JSR] = {27, "jsr", jsr},
     [opcode::JMP] = {27, "jmp", jmp},
     [opcode::JR] = {24, "jr", jr},
-    [opcode::RSR] = {24, "rsr", rsr},
+    [opcode::SWAPCC] = {24, "swapcc", swapcc},
 
     [opcode::SYS] = {6, "sys", sys}, // 6 bits is special case
     [opcode::HALT] = {27, "halt", halt},
@@ -436,7 +456,7 @@ instruction::instruction(uint32_t value)
     opcode = (value >> 27);
     dst = (value >> 24) & 0x7;
     src = (value >> 21) & 0x7;
-    size = (value >> 18) & 0x7;
+    modifier = (value >> 18) & 0x7;
     data = value & maskbits(opcodes[opcode].datasize);
 }
 
@@ -455,11 +475,15 @@ int main(int argc, char **argv)
 {
     int verbosity = 0;
     unsigned long long instructions = 0;
+    bool harvard = false;
+    const int programsize = 128 * 1024;
+    uint32_t *program;
 
     po::options_description desc("Simulator options");
     desc.add_options()
         ("help", "produce help message")
         ("verbose", po::value<int>(&verbosity)->default_value(VerbosityLevel::ERROR), "set verbosity level")
+        ("harvard", po::value(&harvard)->zero_tokens(), "use Harvard architecture (instructions separate from RAM)")
     ;
 
     po::variables_map vm;
@@ -471,15 +495,28 @@ int main(int argc, char **argv)
         exit(EXIT_SUCCESS);
     }
 
-    uint32_t addr = 0;
-    uint32_t d;
-    while(fread(&d, 4, 1, stdin) == 1) {
-        s.store32(addr, d);
-        addr += 4;
+    if(harvard) {
+
+        program = new uint32_t[programsize];
+        uint32_t addr = 0;
+        while(fread(&program[addr], 4, 1, stdin) == 1) {
+            addr++;
+        }
+
+    } else {
+
+        uint32_t addr = 0;
+        uint32_t d;
+        while(fread(&d, 4, 1, stdin) == 1) {
+            s.store32(addr, d);
+            addr += 4;
+        }
     }
 
     while(!s.halted) {
-        instruction instr(s.fetch32(s.registers[reg::PC]));
+        uint32_t pc = s.registers[reg::PC];
+        uint32_t word = harvard ? program[pc / 4] : s.fetch32(pc);
+        instruction instr(word);
 
         if(s.memory_fault) {
             printf("memory fault at 0x%08X\n", s.fault_address);
@@ -489,7 +526,7 @@ int main(int argc, char **argv)
         if(verbosity >= VerbosityLevel::DEBUG) {
             printf("decoded %s", opcodes[instr.opcode].name);
             if(opcodes[instr.opcode].datasize == 18) {
-                printf(", dst = %d, src = %d, size = %d, data = 0x%X\n", instr.dst, instr.src, instr.size, instr.data);
+                printf(", dst = %d, src = %d, size = %d, data = 0x%X\n", instr.dst, instr.src, instr.modifier, instr.data);
             } else if(opcodes[instr.opcode].datasize == 24) {
                 printf(", dst = %d, src = %d, data = 0x%X\n", instr.dst, instr.src, instr.data);
             } else /* if(opcodes[instr.opcode].datasize == 27) or 6 */ {
@@ -518,6 +555,10 @@ int main(int argc, char **argv)
     };
 
     if(verbosity >= VerbosityLevel::INFO) {
+        printf("R0:%08X R1:%08X R2:%08X R3:%08X\n",
+            s.registers[0], s.registers[1], s.registers[2], s.registers[3]);
+        printf("R4:%08X R5:%08X SP:%08X PC:%08X\n", 
+            s.registers[4], s.registers[5], s.registers[6], s.registers[7]);
         printf("%llu instructions executed\n", instructions);
     }
 }
