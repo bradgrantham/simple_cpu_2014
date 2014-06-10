@@ -120,7 +120,7 @@ namespace opcode {
     const uint JNE = 0x16;
     const uint JR = 0x17;
     const uint JSR = 0x18;
-    const uint RSR = 0x19;
+    const uint UNUSED_19 = 0x19;
     const uint JMP = 0x1a;
 
     const uint SYS = 0x1b;
@@ -136,6 +136,13 @@ namespace opsize {
     const uint SIZE_32 = 2;
 };
 
+namespace shifttype {
+    const uint RL = 0;
+    const uint RA = 1;
+    const uint LL = 2;
+    const uint LA = 3;
+};
+
 namespace reg {
     const uint R0 = 0;
     const uint R1 = 1;
@@ -143,6 +150,7 @@ namespace reg {
     const uint R3 = 3;
     const uint R4 = 4;
     const uint R5 = 5;
+    const uint FP = 5;
     const uint R6 = 6;
     const uint SP = 6;
     const uint R7 = 7;
@@ -178,7 +186,6 @@ auto const JL = format27_<opcode::JL>;
 auto const JSR = format27_<opcode::JSR>;
 auto const JMP = format27_<opcode::JMP>;
 auto const JR = format24_<opcode::JR>;
-auto const RSR = format24_<opcode::RSR>;
 
 auto const SYS = format27_<opcode::SYS>; // only LS 6 bits are used
 auto const HALT = format27_<opcode::HALT>;
