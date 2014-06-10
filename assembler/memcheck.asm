@@ -28,6 +28,8 @@ test:   // some simple instruction tests
         store.word r5, r3       // *(short*)r5 = 0x5678
         load.word r6, r5        // r6 = *(r5) = 0x5678
         mult r0, r3
+        moviu r1, 0x1337
+        addi r1, 0xC0DE
         hlt
 
 badMem:
