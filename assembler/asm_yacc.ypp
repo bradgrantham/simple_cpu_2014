@@ -269,6 +269,7 @@ string_directive :
                   PadAddressAndAssignLabels(curLine, curAddress, 1);
                   for(auto it = $2->begin(); it != $2->end(); it++)
                       file.Store8(curAddress++, *it);
+                  file.Store8(curAddress++, 0);
                   curAddress += $2->size();
               }
         ;
