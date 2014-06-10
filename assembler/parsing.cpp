@@ -117,7 +117,7 @@ ImmediateOperandInfo instr_infos[] = {
     [simple_cpu_2014::opcode::JR] {2, true, 24, false },
     [simple_cpu_2014::opcode::JSR] {2, true, 24, true },
 
-    [simple_cpu_2014::opcode::RSR] {0, false, 0, false},
+    [simple_cpu_2014::opcode::UNUSED_19] {0, false, 0, false},
 
     [simple_cpu_2014::opcode::JMP] {2, false, 27, false },
 
@@ -182,7 +182,7 @@ bool InstructionRXImmModified::Store(labels_map& labels, OutputFile& file)
 
     u = instr_infos[opcode].Encode(u, linenum, address);
 
-    uint instruction = simple_cpu_2014::format21(opcode, rx, modifier, u);
+    uint instruction = simple_cpu_2014::format18(opcode, rx, 0, modifier, u);
     file.Store32(address, instruction);
     return success;
 }
