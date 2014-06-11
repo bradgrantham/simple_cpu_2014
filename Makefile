@@ -1,5 +1,5 @@
-CXXFLAGS=-I/opt/local/include/ -Wall --std=c++11 -O3
-LDFLAGS=-L/opt/local/lib/ -lboost_program_options-mt -lboost_regex-mt
+CXXFLAGS=-I/opt/local/include/ -Wall --std=c++11 -O3 -DUSE_OPENGL
+LDFLAGS=-L/opt/local/lib/ -lboost_program_options-mt -lboost_regex-mt -lglfw -framework OpenGL 
 
 all: memory_test sim hello 
 
